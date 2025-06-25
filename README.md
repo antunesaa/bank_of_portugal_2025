@@ -17,7 +17,7 @@ methods rather than particular models or modeling paradigms.
 ## Details
 
 * Location: Bank of Portugal
-* Dates: 2nd June 2025
+* Dates: October 7th-10th 2025
 * Instructor: [John Stachurski](https://johnstachurski.net/)
 
 ## Schedule
