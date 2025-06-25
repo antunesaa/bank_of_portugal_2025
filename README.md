@@ -10,7 +10,7 @@ software. Much of this investment has centered on parallelization, automatic
 differentiation, and just-in-time compilers. In this workshop, we will explore
 these new environments and their features, and investigate how such tools might
 be applied to macroeconomic applications.  The focus will be foundational and
-numerical, emphasizing understanding new computing paradigms and numerical
+numerical, emphasizing understanding of new computing environments and numerical
 methods rather than particular models or modeling paradigms.
 
 
