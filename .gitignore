@@ -1,7 +1,12 @@
-
 # Temporary: Ignore Jupyter notebooks during development
-# TODO: Remove this block when ready to publish everything
+# TODO: Remove this block when ready to publish everything!
 *.ipynb
+
+# Temporary development files
+tuesday/source/mathfoo.py
+tuesday/source/mod.py
+tuesday/source/us_cities.txt
+tuesday/us_cities.txt
 
 # Python cache and Jupyter checkpoints
 __pycache__/
@@ -34,10 +39,3 @@ __pycache__/
 *.synctex.gz
 *.synctex.gz(busy)
 *.pdfsync
-
-# Temporary development files
-tuesday/source/mathfoo.py
-tuesday/source/mod.py
-tuesday/source/us_cities.txt
-tuesday/us_cities.txt
-
