@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to execute all Jupyter notebooks in day_1 and day_2 directories
+Script to execute all Jupyter notebooks in dayname directories
 and populate them with output.
 """
 
@@ -18,7 +18,7 @@ def execute_notebook(notebook_path):
         with open(notebook_path, 'r', encoding='utf-8') as f:
             nb = nbformat.read(f, as_version=4)
 
-        # Configure the executor
+        # Configure the executor with 10 minute timeout
         ep = ExecutePreprocessor(timeout=600, kernel_name='python3')
 
         # Execute the notebook
@@ -36,9 +36,20 @@ def execute_notebook(notebook_path):
         return False
 
 def main():
-    """Main function to execute all notebooks in day_1 and day_2."""
+    """Main function to execute all notebooks in dayname directories."""
     script_dir = Path(__file__).parent
-    directories = ['day_1', 'day_2']
+
+    # Find all directories that contain .ipynb files
+    directories = []
+    for item in script_dir.iterdir():
+        if item.is_dir() and list(item.glob('*.ipynb')):
+            directories.append(item.name)
+
+    directories.sort()
+
+    if not directories:
+        print("No directories with notebook files found")
+        return
 
     total_notebooks = 0
     successful_executions = 0
@@ -46,16 +57,8 @@ def main():
     for directory in directories:
         dir_path = script_dir / directory
 
-        if not dir_path.exists():
-            print(f"Directory {directory} not found, skipping...")
-            continue
-
         # Find all .ipynb files in the directory
         notebook_files = list(dir_path.glob('*.ipynb'))
-
-        if not notebook_files:
-            print(f"No notebook files found in {directory}")
-            continue
 
         print(f"\nProcessing {len(notebook_files)} notebooks in {directory}/")
 
