@@ -29,97 +29,6 @@ from numba import jit, prange
 ```
 
 
-## Exercise
-
-Compute an approximation to $ \pi $ using [Monte Carlo](https://en.wikipedia.org/wiki/Monte_Carlo_method).
-
-Your hints are as follows:
-
-- If $ U $ is a bivariate uniform random variable on the unit square $ (0, 1)^2 $, then the probability that $ U $ lies in a subset $ B $ of $ (0,1)^2 $ is equal to the area of $ B $.  
-- If $ U_1,\ldots,U_n $ are IID copies of $ U $, then, as $ n $ gets large, the fraction that falls in $ B $, converges to the probability of landing in $ B $.  
-- For a circle, $ area = \pi * radius^2 $.  
-
-```{code-cell} ipython3
-# Put your code here
-```
-
-```{code-cell} ipython3
-for _ in range(12):
-    print('solution below')
-```
-
-Consider the circle of diameter 1 embedded in the unit square.
-
-Let $ A $ be its area and let $ r=1/2 $ be its radius, so that $A = \pi r^2 $.
-
-If we can estimate $A$ then we can estimate $ \pi $ via $ \pi = A / r^2 = 4A$.
-
-We estimate $A$ by sampling bivariate uniforms and looking at the fraction that falls into the circle.
-
-```{code-cell} ipython3
-n = 1_000_000 # sample size for Monte Carlo simulation
-
-def in_circle(u, v):
-    """
-    Test whether (u, v) falls within the unit circle centred at (0.5,0.5)
-    """
-    d = np.sqrt((u - 0.5)**2 + (v - 0.5)**2)
-    return d < 0.5
-
-count = 0
-for i in range(n):
-
-    # drawing random positions on the square
-    u, v = np.random.uniform(0, 1), np.random.uniform(0, 1)
-
-    # if it falls within the circle, add it to the count
-    if in_circle(u, v):
-        count += 1
-
-area_estimate = count / n
-
-print(area_estimate * 4)  # dividing by radius**2
-```
-
-
-## Exercise
-
-Accelerate the code from the previous exercise using Numba.  Time the difference.
-
-```{code-cell} ipython3
-for _ in range(12):
-    print('solution below')
-```
-
-```{code-cell} ipython3
-def calculate_pi(n=1_000_000):
-    count = 0
-    for i in range(n):
-        u, v = np.random.uniform(0, 1), np.random.uniform(0, 1)
-        d = np.sqrt((u - 0.5)**2 + (v - 0.5)**2)
-        if d < 0.5:
-            count += 1
-    area_estimate = count / n
-    return area_estimate * 4  # dividing by radius**2
-```
-
-```{code-cell} ipython3
-%time calculate_pi()
-```
-
-```{code-cell} ipython3
-fast_calc_pi = jit(calculate_pi)
-```
-
-```{code-cell} ipython3
-%time fast_calc_pi()
-```
-
-And again to omit compile time:
-
-```{code-cell} ipython3
-%time fast_calc_pi()
-```
 
 ## Exercise
 
@@ -153,14 +62,18 @@ Hints:
 - Represent the low state as 0 and the high state as 1.  
 - If you want to store integers in a NumPy array and then apply JIT compilation, use `x = np.empty(n, dtype=numba.int64)` or similar.  
 
+
+
+
 ```{code-cell} ipython3
 # Put your code here
 ```
 
 ```{code-cell} ipython3
-for _ in range(12):
-    print('solution below')
+for _ in range(20):
+    print('Solution below!')
 ```
+
 
 We let
 
@@ -231,7 +144,7 @@ Now let's check the speed:
 ```
 
 
-**Exercise**
+## Exercise
 
 
 We consider using Monte Carlo to price a European call option.
@@ -289,15 +202,16 @@ If possible, use Numba-based multithreading (`parallel=True`) to speed it even
 further.
 
 
-
-
 ```{code-cell} ipython3
-for _ in range(12):
-    print('solution below')
+# Put your code here
 ```
 
 
-**Solution**
+```{code-cell} ipython3
+for _ in range(20):
+    print('solution below')
+```
+
 
 
 With $s_t := \ln S_t$, the price dynamics become

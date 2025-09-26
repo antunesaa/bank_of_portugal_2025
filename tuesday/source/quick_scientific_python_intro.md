@@ -27,9 +27,11 @@ This notebook does a "whirlwind tour" of the functionality that the scientific P
 import numpy as np
 ```
 
-`numpy` is one of the core scientific libraries used in Python.
+NumPy is one of the core scientific libraries used in Python.
 
-The main object that it introduces is an "array" type. This array type allows for users to represent vectors, matrices, and higher dimensional arrays.
+It introduces an "array" type. 
+
+This array type allows for users to represent vectors, matrices, and higher dimensional arrays.
 
 ```{code-cell} ipython3
 x = np.array([0.0, 1.0, 2.0])
@@ -66,12 +68,11 @@ y.T.shape
 We can select elements out of the array by indexing into the arrays
 
 ```{code-cell} ipython3
-# Python indexing starts at 0
 x[0]
 ```
 
 ```{code-cell} ipython3
-y[:, 1]  # Select column 1 (not col 0!)
+y[:, 1]  # Select column 1 
 ```
 
 ### Special array creation methods
@@ -153,8 +154,10 @@ x - 3
 
 #### Operations between arrays of different sizes
 
+In general, for pointwise operations between arrays of different shape, NumPy uses *broadcasting* rules.
+
 ```{code-cell} ipython3
-z = np.ones((3, 1))* 10
+z = np.ones((3, 1)) * 10
 print(z)
 print()
 print(y)
@@ -162,61 +165,48 @@ print()
 print(z + y)
 ```
 
+#### Matrix Multiplication
+
 ```{code-cell} ipython3
-# Matrix multiplication
-y @ y.T
+print(y)
+print(y @ y.T)
 ```
 
-### Numpy array functions
+We can use `@` for inner products too:
 
-We are often interested in computing various functions of a single array -- Something like `sum` or `mean`.
+```{code-cell} ipython3
+z = np.random.randn(10)
+print(np.sum(z * z))
+print(z @ z)
+```
 
-`numpy` has many array functions built in. Many of these functions are something known as a "reduction" -- This just means it takes many inputs and returns a single output (think about what computing the mean does). Reductions can often be applied either to the entire array or to a single axis. If you apply it to a single axis, that axis will get collapsed into a single value.
+### Reductions
+
+In NumPy-speak, *reductions* are functions that map an array into a single value.
 
 Here we demonstrate a few of the most common array functions and some reductions:
 
 ```{code-cell} ipython3
-# Cumulative sum
 np.cumsum(x)
 ```
 
 ```{code-cell} ipython3
-# One element differences
-np.diff(x)
+np.mean(z)
 ```
 
 ```{code-cell} ipython3
-# Mean (vector)
-np.mean(x)
+np.var(z)
 ```
 
 ```{code-cell} ipython3
-# Mean (matrix)
-np.mean(y)
-```
-
-```{code-cell} ipython3
-# Mean on a matrix but collapsing the rows
-# y is size (3, 2) and np.mean(y, axis=0) is size (2,)
-np.mean(y, axis=0)
-```
-
-```{code-cell} ipython3
-# Standard deviation on a 3 dimensional array collapsing on the
-# 3rd dimension
-np.std(z, axis=2)
+np.std(np.random.randn(100_000))
 ```
 
 ### Universal functions
 
-One of the powerful tools that `numpy` opens to users is "universal functions" (ufuncs).
-
-These are functions that operate directly on n-dimensional arrays in an element-by-element fashion.
-
-Not only does this make it simple to apply a function to an entire array but, behind the scenes, there is a significant amount of optimization and multithreading happening. There are lots of ufuncs available to you in `numpy` -- Take a peek at [the documentation](https://docs.scipy.org/doc/numpy/reference/ufuncs.html?highlight=ufunc#available-ufuncs) for a list
+Universal functions ("ufuncs") are maps that operate directly on n-dimensional arrays in an element-by-element fashion.
 
 ```{code-cell} ipython3
-# Computes sin(x) for each element of x
 np.sin(x)
 ```
 
@@ -247,7 +237,7 @@ We can see this difference by setting certain elements of the figure to differen
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
 
-fig.set_facecolor("red")
+fig.set_facecolor("green")
 ax.set_facecolor("blue")
 ```
 
@@ -284,22 +274,34 @@ ax.fill_between(x, y, 2*y, color="LightBlue", alpha=0.3)
 **Bar plots**
 
 ```{code-cell} ipython3
-x = ["Red", "Blue", "Green"]
-y = [5, 10, 15]
-
+x = np.arange(10)
+y = np.cos(x)
 fig, ax = plt.subplots(figsize=(6, 4))
-
-ax.bar(x, y, color=["r", "b", "g"])
+ax.bar(x, y)
 ```
 
 **Histograms**
 
 ```{code-cell} ipython3
 x = np.random.randn(5000)
+fig, ax = plt.subplots()
+_ = ax.hist(x, bins=25, density=True)
+```
+
+**Plotting piecewise linear interpolation**
+
+```{code-cell} ipython3
+x = np.linspace(0.25, 10.0, 15)  # interpolation points on x axis
+y = np.sin(x)                    # interpolation points on y axis
+
+x_interp = np.linspace(0.0, 11, 100)    # x points where we seek interpolated values
+y_interp = np.interp(x_interp, x, y)    # interpolated values
 
 fig, ax = plt.subplots()
-
-ax.hist(x, bins=25, density=True)
+ax.scatter(x, y, color="r", s=20, label='interpolation points')
+ax.plot(x_interp, y_interp, alpha=0.5, lw=2, label='interpolated values')
+ax.set_yticks((-1, 0, 1))
+ax.legend()
 ```
 
 ## Scipy
@@ -312,56 +314,34 @@ While `numpy` introduces the array type and some basic functionality on top of t
 
 ### Interpolation
 
-Within economics, we often need to approximate functions where we only observe a finite set of values that the function can take.
+NumPy provides basic linear interpolation, as shown above.
 
-We "interpolate" between these points in a number of ways. `scipy.interpolate` provides a convenient interface to perform this interpolation in many of the most common interpolation routines.
+The function `scipy.interpolate` provides more options
 
 ```{code-cell} ipython3
 import scipy.interpolate as interp
-```
-
-```{code-cell} ipython3
-x = np.linspace(0.25, 10.0, 15)
-y = np.log(x)
-```
-
-**Piecewise linear interpolation**
-
-```{code-cell} ipython3
-# Can do piecewise linear with numpy
-x_interp = np.linspace(0.0, 11, 100)
-y_interp = np.interp(x_interp, x, y)
-
-fig, ax = plt.subplots()
-
-ax.scatter(x, y, color="r", s=20)
-ax.plot(x_interp, y_interp, color="k", linewidth=0.5)
 ```
 
 **Piecewise cubic**
 
 ```{code-cell} ipython3
 f = interp.interp1d(x, y, kind="cubic", fill_value="extrapolate")
-
 y_interp = f(x_interp)
 
 fig, ax = plt.subplots()
-
 ax.scatter(x, y, color="r", s=20)
-ax.plot(x_interp, y_interp, color="k", linewidth=0.5)
+ax.plot(x_interp, y_interp, lw=2, alpha=0.5)
 ```
 
 **Other**
 
 ```{code-cell} ipython3
 f = interp.PchipInterpolator(x, y, extrapolate=True)
-
 y_interp = f(x_interp)
 
 fig, ax = plt.subplots()
-
 ax.scatter(x, y, color="r", s=20)
-ax.plot(x_interp, y_interp, color="k", linewidth=0.5)
+ax.plot(x_interp, y_interp, linewidth=2, alpha=0.5)
 ```
 
 ### Linear algebra
@@ -388,13 +368,6 @@ la.cholesky(X)
 
 ```{code-cell} ipython3
 la.solve(X, np.array([0.0, 0.5, 0.3]))
-
-# Check out all of the other solve options based
-# on the shape of the matrix
-# la.solve_circulant
-# la.solve_toeplitz
-# la.solve_banded
-# la.solve_triangular
 ```
 
 ```{code-cell} ipython3
@@ -411,24 +384,22 @@ X
 ```
 
 ```{code-cell} ipython3
-Q@R
+Q @ R
 ```
 
 ```{code-cell} ipython3
-la.inv(X)@X
+la.inv(X) @ X
 ```
 
 ### Statistics
 
-We often want to work with various probability distributions. We could code up the pdf or a sampler ourselves but this work is largely done for us within `scipy.statistics`.
+We often want to work with various probability distributions. 
 
-The one warning we include here is that sometimes `scipy.stats` uses a non-canonical representation of the distribution.
+We could code up the pdf or a sampler ourselves but this work is largely done for us within `scipy.statistics`.
 
 ```{code-cell} ipython3
 import scipy.stats as st
 ```
-
-**Normal distribution**
 
 ```{code-cell} ipython3
 # location specifies the mean / scale specifies the standard deviation
@@ -452,129 +423,16 @@ d.cdf(2.0)
 
 ```{code-cell} ipython3
 # Fit a normal rv to N(0, 1) data
-st.norm.fit(np.random.randn(5000))
+st.norm.fit(12 + 4 * np.random.randn(100_000))
 ```
 
-**Exponential**
+SciPy's API for working with probability distributions is a bit weird but the code is stable and well-written.
 
-Note: `scipy.stats` classifies this in terms of a "standardized form"
-
-$$f(x) = \exp(-x)$$
-
-If you want to use the "non-standardized form" then you use the `loc` and `scale` parameters
-
-Let $y = \frac{(x - \text{loc})}{\text{scale}}$. Then `expon(loc=loc, scale=scale).pdf(x) = expon().pdf(x) / scale`
-
-The classical characterization (i.e. $f(x) = \exp(-\lambda x)$) is equivalent to choosing `scale = 1 / lambda`.
-
-```{code-cell} ipython3
-d = st.expon(scale=2)
-```
-
-```{code-cell} ipython3
-# Draw random samples
-d.rvs(25)
-```
-
-```{code-cell} ipython3
-# Probability density function
-d.pdf(-1.0)
-```
-
-```{code-cell} ipython3
-# Cumulative density function
-d.cdf(5.0)
-```
-
-```{code-cell} ipython3
-# Fit random data
-st.expon.fit(np.array([0.5, 0.25, 0.75, 0.1, 0.2, 1.5]))
-```
-
-```{code-cell} ipython3
-st.expon.fit(np.array([0.5, 0.25, 0.75, 0.1, 0.2, 1.5]), floc=0)
-```
-
-```{code-cell} ipython3
-st.expon.fit(np.array([0.5, 0.25, 0.75, 0.0, 0.2, 1.5]))
-```
-
-**Pareto**
-
-Note: `scipy.stats` classifies this in terms of a "standardized form"
-
-$$f(x, b) = \frac{b}{x^{b+1}$$
-
-If you want to use the "non-standardized form" then you use the `loc` and `scale` parameters
-
-Let $y = \frac{(x - \text{loc})}{\text{scale}}$. Then `pareto(b, loc=loc, scale=scale).pdf(x) = pareto(b).pdf(y) / scale`
-
-```{code-cell} ipython3
-d = st.pareto(b=2.0, loc=0, scale=1)
-```
-
-```{code-cell} ipython3
-# Draw random samples
-d.rvs(25)
-```
-
-```{code-cell} ipython3
-# Probability density function
-d.pdf(5.0)
-```
-
-```{code-cell} ipython3
-# Cumulative density function
-d.cdf(5.0)
-```
-
-```{code-cell} ipython3
-# Fit random data
-st.pareto.fit(np.array([2.5, 4.25, 7.75, 3.1, 1.2, 0.5]), floc=0, fscale=0)
-```
++++
 
 ## Numba
 
 `numba` is a very exciting, and powerful package, that brings "just-in-time" (JIT) compilation technology to Python.
-
-+++
-
-**Brief background**
-
-You may have heard about the differences between "compiled programming languages" and "interpreted programming languages"
-
-* A compiled language is run in a few steps:
-  * Programmer writes the code
-  * Compiler converts that code into machine code
-  * Computer runs machine code. Note that once the code is compiled, it can be run whenever one wants without the compilation step
-* An interpreted language runs code differently:
-  * Programmer writes code
-  * Computer "runs" the code by
-    * An "interpreter" reads the code line-by-line
-    * For each line, the interpreter figures out what the inputs are and tries to convert it to machine code
-    * Computer runs the machine code
-
-+++
-
-**Pros and cons of compiled**
-
-* Once the compiler has run, the code is already machine code and runs very fast (as fast as possible given the code you wrote)
-* For very large programs, compilation requires the upfront cost of compilation which can take minutes/hours
-* Compiled programs can only be shared within similar hardware architecture and operating systems (though as long as there's a compiler for the hardware/OS, one could recompile the code)
-
-**Pros and cons of interpreted**
-
-* As long as there is an interpreter for the hardware/operating system, interpreted code can be easily shared
-* Significantly slower than compiled code because of the back and forth to read the code line-by-line (which has to be redone each time the code is run!)
-* Easier to interact with your code (and more importantly, your data!) because you can run one line at a time
-
-+++
-
-**How different are they in speed?**
-
-+++
-
-_Python_
 
 ```{code-cell} ipython3
 import numpy as np
@@ -619,7 +477,8 @@ calculate_pi_python(1_000_000)
 _Fortran_
 
 ```{code-cell} ipython3
-#pip install mason ninja  # Uncomment if you wish
+#pip install meson ninja  # Uncomment if you wish
+#pip install fortran-magic
 ```
 
 ```{code-cell} ipython3
@@ -661,7 +520,6 @@ subroutine calculate_pi_fortran(n, pi_approx)
     approximate_area = REAL(in_circ) / REAL(n)
     pi_approx = 4.0 * approximate_area
 end subroutine calculate_pi_fortran
-
 
 ```
 
@@ -728,54 +586,29 @@ calculate_pi_numba(1_000_000)
 ```{code-cell} ipython3
 @numba.jit(nopython=True, parallel=True)
 def calculate_pi_parallel(n=1_000_000):
-    """
-    Approximates pi by drawing two random numbers and
-    determining whether the of the sum of their squares
-    is less than one (which tells us if the points are
-    in the upper-right quadrant of the unit circle). The
-    fraction of draws in the upper-quadrant approximates
-    the area which we can then multiply by 4 to get the
-    area of the circle (which is pi since r=1)
-    """
-
-    # Iterate for many sample
     in_circ = 0
+
     for i in numba.prange(n):
-        # Draw random numbers
+        # Draw (x, y) uniformly on S
         x = np.random.random()
         y = np.random.random()
-
-        if (x**2 + y**2) < 1:
+        # Increment counter if (x, y) falls in C
+        if np.sqrt((x - 0.5)**2 + (y - 0.5)**2) < 1/2:
             in_circ += 1
 
-    return 4 * (in_circ / n)
+    approximate_area = in_circ / n
+
+    return 4 * approximate_area
+```
+
+```{code-cell} ipython3
+calculate_pi_parallel(1_000_000)
 ```
 
 ```{code-cell} ipython3
 %%timeit
 
 calculate_pi_parallel(1_000_000)
-```
-
-Small side note... A warning to beware of race conditions
-
-Any time that you write parallel code, you must understand how each computation can affect another. If you don't consider this carefully, your output could depend on the order in which each computation finishes! This is known as a "race condition" and is _very very bad_ because it creates a non-determinism in your code.
-
-Why is it so bad? It's possible that your code returns the right answer sometimes and the wrong answer others -- This non-determinism makes it difficult to debug
-
-```{code-cell} ipython3
-@numba.jit(parallel=True)
-def dumb_parallel_function(n=500_000):
-    x = np.zeros(n)
-    for i in numba.prange(n):
-        x[0] = i
-        x[i] = i
-
-    return x
-```
-
-```{code-cell} ipython3
-dumb_parallel_function(5)
 ```
 
 **Writing GPU code with numba**

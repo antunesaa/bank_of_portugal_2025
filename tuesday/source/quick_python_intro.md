@@ -249,10 +249,6 @@ b = np.empty(T+1)   # Allocate memory to store all b_t
 
 and then populate `b` in a for loop.
 
-```{code-cell} ipython3
-for i in range(12):
-    print("Solution below.")
-```
 
 ```{code-cell} ipython3
 # Put your solution here
