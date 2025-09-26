@@ -14,9 +14,10 @@ jupyter:
 
 # Fun with JAX
 
-*Prepared for the Computational Economics Workshop at Hitotsubashi*
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-#### [John Stachurski](https://johnstachurski.net/)
+**Author:** [John Stachurski](https://johnstachurski.net)
+
 September 2025
 
 This is a super quick illustration of the power of [JAX](https://github.com/google/jax), a Python library built by Google Research.

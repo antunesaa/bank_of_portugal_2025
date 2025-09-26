@@ -13,6 +13,10 @@ kernelspec:
 
 ## Quick scientific Python introduction
 
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
+
+**Author:** [John Stachurski](https://johnstachurski.net)
+
 This notebook does a "whirlwind tour" of the functionality that the scientific Python stack exposes.
 
 +++
@@ -27,60 +31,33 @@ import numpy as np
 
 The main object that it introduces is an "array" type. This array type allows for users to represent vectors, matrices, and higher dimensional arrays.
 
-Below we create a 1-dimensional, 2-dimensional, and 3-dimensional array.
-
 ```{code-cell} ipython3
 x = np.array([0.0, 1.0, 2.0])
-y = np.array([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]])
-z = np.array([
-    [[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]],
-    [[6.0, 7.0], [8.0, 9.0], [10.0, 11.0]],
-    [[12.0, 13.0], [14.0, 15.0], [16.0, 17.0]],
-    [[18.0, 19.0], [20.0, 21.0], [22.0, 23.0]]
-])
+
+y = np.array([[0.0, 1.0], 
+              [2.0, 3.0], 
+              [4.0, 5.0]])
 ```
-
-### Shapes of arrays
-
-As we create and manipulate arrays, we will often be interested in "what shape is our current array" and "what shape do we need this array to be".
-
-**1-dimensional**
-
-In the code above, we created `x` by doing
-
-```python
-x = np.array([0.0, 1.0, 2.0])
-```
-
-If we asked for `len([0.0, 1.0, 2.0])` we would have seen 3 -- The 1-dimensional array in our example was size 3.
-
-**2-dimensional**
-
-In the code, above we created `y` by doing
-
-```python
-y = np.array([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]])
-```
-
-Again, if we asked for `len([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]])`, we would have received 3.
-
-But now, there's an additional list inside! The `len([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0]][0])` would be `len([0.0, 1.0])` which is 2.
-
-Thus our array is size 3 x 2.
-
-The sizes correspond to the length of the lists creating them -- The inner-most dimension size is the outer-most length.
-
-**3-dimensional**
-
-Your turn! What size do you think `z` is?
 
 ```{code-cell} ipython3
-
+x
 ```
 
-Hint: You can check your answer by doing `z.shape`
+```{code-cell} ipython3
+y
+```
 
-+++
+```{code-cell} ipython3
+y.shape
+```
+
+```{code-cell} ipython3
+y.T
+```
+
+```{code-cell} ipython3
+y.T.shape
+```
 
 **Indexing**
 
@@ -94,13 +71,7 @@ x[0]
 ```
 
 ```{code-cell} ipython3
-# Can select all of a particular dimension by using :
-y[:, 1]
-```
-
-```{code-cell} ipython3
-# One index argument per dimension
-z[:, 1:3, 0]
+y[:, 1]  # Select column 1 (not col 0!)
 ```
 
 ### Special array creation methods
@@ -149,17 +120,20 @@ np.random.rand(2, 3)
 np.random.randn(2, 2, 3)
 ```
 
-### Broadcasting
+### Operations on Arrays
 
-You often will need to add scalars or other arrays to arrays. We call this broadcasting.
+Operations on arrays are typically element by element.
 
-+++
+```{code-cell} ipython3
+z = np.full(3, 10.0)
+print(f"    x = {x}")
+print(f"    z = {z}")
+print(f"z + x = {z + x}")
+```
 
 **Operations between scalars and arrays**
 
 These operations do mostly what you would expect -- They apply the scalar operation to each individual element of the array.
-
-For example `z = x + 1` returns a new array, `z`, where `z_i = x_i + 1`
 
 ```{code-cell} ipython3
 x
@@ -177,36 +151,15 @@ x * 3
 x - 3
 ```
 
-**Operations between two arrays of the same size**
-
-Most operations do elementwise computation when you do operations on two arrays of the same size.
+#### Operations between arrays of different sizes
 
 ```{code-cell} ipython3
-# Elementwise addition
-np.ones_like(x) + x
-```
-
-```{code-cell} ipython3
-# Elementwise multiplication
-np.zeros_like(z) * z
-```
-
-```{code-cell} ipython3
-# Dot product -- Generally will try matrix multiplication
-# but for two vectors, this will just do the dot product
-np.ones_like(x) @ x
-```
-
-**Operations between two arrays of different sizes**
-
-You should be more careful if you are working with arrays of different sizes:
-
-* Let `x = N x 1` and `y = N x M`) -> Then `x ? y` applies the function as if it were applying it to each column. For example, `z = x + y` gives you `z.shape => N x M` where `z[i, j] = x[i] + y[i, j]` (generalizes to higher dimensions...).
-* Let `x = N x M` and `y = M x P` then `x @ y` does matrix multiplication
-
-```{code-cell} ipython3
-# x[:, None] is a fancy way to convert a vector into an Nx1 array
-x[:, None] + y
+z = np.ones((3, 1))* 10
+print(z)
+print()
+print(y)
+print()
+print(z + y)
 ```
 
 ```{code-cell} ipython3
@@ -629,26 +582,32 @@ import numpy as np
 
 def calculate_pi_python(n=1_000_000):
     """
-    Approximates pi by drawing two random numbers and
-    determining whether the of the sum of their squares
-    is less than one (which tells us if the points are
-    in the upper-right quadrant of the unit circle). The
-    fraction of draws in the upper-quadrant approximates
-    the area which we can then multiply by 4 to get the
-    area of the circle (which is pi since r=1)
+    Approximates π as follows:
+
+    For a circle of radius 1/2, area = π r^2 = π / 4 
+
+    Hence π = 4 area.
+
+    We estimate the area of a circle C of radius 1/2 inside the unit square S = [0, 1] x [0, 1].
+
+        area = probability that a uniform distribution on S assigns to C
+        area is approximately fraction of uniform draws in S that fall in C
+
+    Then we estimate π using the formula above.
     """
     in_circ = 0
 
-    # Iterate for many samples
     for i in range(n):
-        # Draw random numbers
+        # Draw (x, y) uniformly on S
         x = np.random.random()
         y = np.random.random()
-
-        if (x**2 + y**2) < 1:
+        # Increment counter if (x, y) falls in C
+        if np.sqrt((x - 0.5)**2 + (y - 0.5)**2) < 1/2:
             in_circ += 1
 
-    return 4 * (in_circ / n)
+    approximate_area = in_circ / n
+
+    return 4 * approximate_area
 ```
 
 ```{code-cell} ipython3
@@ -660,6 +619,14 @@ calculate_pi_python(1_000_000)
 _Fortran_
 
 ```{code-cell} ipython3
+#pip install mason ninja  # Uncomment if you wish
+```
+
+```{code-cell} ipython3
+#sudo apt install gfortran  # Uncomment for Ubuntu or search for instructions for your OS
+```
+
+```{code-cell} ipython3
 %load_ext fortranmagic
 ```
 
@@ -667,23 +634,35 @@ _Fortran_
 %%fortran
 
 subroutine calculate_pi_fortran(n, pi_approx)
+    implicit none
     integer, intent(in) :: n
     real, intent(out) :: pi_approx
+    
+    integer :: in_circ, i
+    real :: x, y, distance
+    real :: approximate_area
 
-    integer :: count
-    real :: x, y
-
-    count = 0
+    in_circ = 0
     
     CALL RANDOM_SEED
     DO i = 1, n
+        ! Draw (x, y) uniformly on unit square [0,1] x [0,1]
         CALL RANDOM_NUMBER(x)
         CALL RANDOM_NUMBER(y)
-        IF (x*x + y*y < 1.0) count = count + 1
+        
+        ! Calculate distance from center (0.5, 0.5)
+        distance = SQRT((x - 0.5)**2 + (y - 0.5)**2)
+        
+        ! Increment counter if (x, y) falls in circle of radius 1/2
+        IF (distance < 0.5) in_circ = in_circ + 1
     END DO
 
-    pi_approx = 4.0 * REAL(count)/REAL(n)
+    ! Estimate area and then π
+    approximate_area = REAL(in_circ) / REAL(n)
+    pi_approx = 4.0 * approximate_area
 end subroutine calculate_pi_fortran
+
+
 ```
 
 ```{code-cell} ipython3
@@ -692,7 +671,7 @@ end subroutine calculate_pi_fortran
 calculate_pi_fortran(1_000_000)
 ```
 
-Fortran (\~10 ms) <<< Python (\~650 ms)
+Clearly Fortran is much faster!
 
 +++
 

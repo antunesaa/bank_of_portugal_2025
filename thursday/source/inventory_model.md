@@ -13,9 +13,9 @@ kernelspec:
 
 # Inventory Management with JAX
 
-*Prepared for the Computational Economics Workshop at Hitotsubashi*
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-Author: [John Stachurski](https://johnstachurski.net)
+**Author:** [John Stachurski](https://johnstachurski.net)
 
 This notebook studies a stochastic dynamic inventory management model and
 computes the optimal policy using

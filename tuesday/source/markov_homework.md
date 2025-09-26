@@ -13,6 +13,10 @@ kernelspec:
 
 # Markov Chains Homework
 
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
+
+**Author:** [John Stachurski](https://johnstachurski.net)
+
 
 ## Ergodicity
 

@@ -13,9 +13,9 @@ kernelspec:
 
 # Job Search
 
-*Prepared for the Computational Economics Workshop at Hitotsubashi*
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-Author: [John Stachurski](https://johnstachurski.net)
+**Author:** [John Stachurski](https://johnstachurski.net)
 
 
 In this lecture we study a basic infinite-horizon job search problem with Markov wage

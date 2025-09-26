@@ -318,3 +318,11 @@ TSWLatexianTemp*
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
+
+# Temporary: Ignore Jupyter notebooks during development
+# TODO: Remove this block when ready to publish everything
+*.ipynb
+
+# Python cache and Jupyter checkpoints
+__pycache__/
+.ipynb_checkpoints/

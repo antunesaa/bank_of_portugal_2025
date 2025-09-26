@@ -13,9 +13,9 @@ kernelspec:
 
 # Job Search with Separation
 
-*Prepared for the Computational Economics Workshop at Hitotsubashi*
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-Author: [John Stachurski](https://johnstachurski.net)
+**Author:** [John Stachurski](https://johnstachurski.net)
 
 This module solves for the optimal policy of an agent who can be either
 unemployed or employed. The key features of the model are:

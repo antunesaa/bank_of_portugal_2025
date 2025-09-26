@@ -13,9 +13,9 @@ kernelspec:
 
 # Simple Neural Network Regression with Keras and JAX
 
-*Prepared for the Computational Economics Workshop at Hitotsubashi*
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-Author: [John Stachurski](https://johnstachurski.net)
+**Author:** [John Stachurski](https://johnstachurski.net)
 
 +++
 

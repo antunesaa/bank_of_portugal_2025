@@ -13,11 +13,9 @@ kernelspec:
 
 # Programming Exercise: Lorenz Curves and Gini Coefficients
 
------
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-#### Chase Coleman and John Stachurski
-
-#### Prepared for the QuantEcon ICD Computational Workshop (March 2024)
+**Author:** [John Stachurski](https://johnstachurski.net)
 
 This notebook contains some programming exercises related to the Lorenz curve
 and the Gini coefficient, which are often used to study inequality.

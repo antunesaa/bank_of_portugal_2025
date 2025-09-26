@@ -13,9 +13,9 @@ kernelspec:
 
 # Simulation Exercises
 
-#### Prepared for the IMF Computational Workshop (March 2024)
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-#### Chase Coleman and John Stachurski
+**Author:** [John Stachurski](https://johnstachurski.net)
 
 +++
 

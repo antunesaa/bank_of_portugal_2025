@@ -13,9 +13,9 @@ kernelspec:
 
 # Inventory Management Model: Vectorization Practice
 
-*Prepared for the Computational Economics Workshop at Hitotsubashi*
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
 
-Author: [John Stachurski](https://johnstachurski.net)
+**Author:** [John Stachurski](https://johnstachurski.net)
 
 This notebook demonstrates a stochastic dynamic inventory management model and compares different computational approaches for calculating transition probabilities.
 
