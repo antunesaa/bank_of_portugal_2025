@@ -12,8 +12,15 @@ tuesday/us_cities.txt
 __pycache__/
 .ipynb_checkpoints/
 
+
+# Minted
+_minted
+
 ## Core latex/pdflatex auxiliary files:
 *.aux
+*.nav
+*.snm
+*.vrb
 *.lof
 *.log
 *.lot
