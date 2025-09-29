@@ -18,28 +18,37 @@ kernelspec:
 **Author:** [John Stachurski](https://johnstachurski.net)
 
 This module solves for the optimal policy of an agent who can be either
-unemployed or employed. The key features of the model are:
+unemployed or employed. 
 
 ## Model Setup
 
-- Agent receives wage offers w from a finite set when unemployed
-- Wage offers follow a Markov chain with transition matrix P
 - Jobs terminate with probability α each period (separation rate)
-- Unemployed workers receive compensation c per period
-- Future payoffs discounted by factor β ∈ (0,1)
+- An unemployed agent receives a wage offer sequence $(w_t)$ until accepting a
+  new job
+- Wage offers follow a Markov chain with transition matrix $P$
+- Employed agents maintain a constant wage during their employment
+- An agent who separates from a job with wage $w$ draws a new offer from
+  distribution $P(w, \cdot)$
+- Unemployed workers receive compensation $c$ each period
+- Future payoffs discounted by factor $\beta \in (0,1)$
+
++++
 
 ## Decision Problem
 
-When unemployed and receiving wage offer w, the agent chooses between:
-1. Accept offer w: Become employed at wage w
-2. Reject offer: Remain unemployed, receive c, get new offer next period
+When unemployed and receiving wage offer $w$, the agent chooses between:
+
+1. Accept offer $w$ and work at this wage until separation
+2. Reject offer: Remain unemployed, receive $c$, get new offer next period
 
 +++
 
 ## Value Functions
 
-- v_u(w): Value of being unemployed when current wage offer is w
-- v_e(w): Value of being employed at wage w
+Let 
+
+- $v_u(w)$ be the value of being unemployed when current wage offer is $w$
+- $v_e(w)$ be the value of being employed at wage $w$
 
 ## Bellman Equations
 
@@ -54,11 +63,13 @@ $$v_e(w) = w + \beta[\alpha \sum_{w'} v_u(w') P(w,w') + (1-\alpha) v_e(w)]$$
 We can rewrite these using matrix-vector style notation as
 
 
-$$v_u(w) = \max\{v_e(w), c + \beta (P v_u)(w) \}$$
+$$v_u = \max\{v_e, c + \beta P v_u \}$$
 
 The employed worker's value function satisfies:
 
-$$v_e(w) = w + \beta[\alpha (P v_u)(w) + (1-\alpha) v_e(w)]$$
+$$v_e = \vec w + \beta[\alpha P v_u + (1-\alpha) v_e]$$
+
+Here $\vec w$ is a vector containing the list of possible wage offers.
 
 +++
 
@@ -69,13 +80,14 @@ $$v_e(w) = w + \beta[\alpha (P v_u)(w) + (1-\alpha) v_e(w)]$$
    $$v_e(w) = \frac{1}{1-\beta(1-\alpha)} \cdot (w + \alpha\beta(Pv_u)(w))$$
 
 3. Substitute into unemployed Bellman equation to get:
+
    $$v_u(w) = \max\left\{\frac{1}{1-\beta(1-\alpha)} \cdot (w + \alpha\beta(Pv_u)(w)), c + \beta(Pv_u)(w)\right\}$$
 
 4. Use value function iteration to solve for  the fixed point $v_u^*$
 5. Compute optimal policy: accept if $v_e^*(w) ≥ c + \beta(Pv_u^*)(w)$
 
 The optimal policy is a reservation wage strategy: accept all wages above
-some threshold w*.
+some threshold $\bar w$.
 
 +++
 
@@ -92,7 +104,7 @@ We use the following imports:
 ```{code-cell} ipython3
 from quantecon.markov import tauchen
 import numpy as np
-from typing import NamedTuple
+from typing import NamedTuple, Callable, Union
 import matplotlib.pyplot as plt
 import numba
 ```
@@ -101,14 +113,17 @@ First, we implement the successive approximation algorithm:
 
 ```{code-cell} ipython3
 def successive_approx(
-        T,                         # Operator (callable)
-        x_0,                       # Initial condition
+        T: Callable,               # Operator
+        x_0: np.ndarray,           # Initial condition
         tolerance: float = 1e-6,   # Error tolerance
         max_iter: int = 100_000,   # Max iteration bound
         verbose: bool = False
     ):
-    """Computes the approximate fixed point of T via successive
-    approximation."""
+    """
+    Computes the approximate fixed point of T via successive
+    approximation.
+
+    """
     x = x_0
     error = tolerance + 1
     k = 1
