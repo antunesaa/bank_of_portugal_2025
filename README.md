@@ -23,8 +23,8 @@ methods rather than particular models or modeling paradigms.
 ## Schedule
 
 * Tuesday: 10:15 – 12:30 and 14:00 – 17:00 
-* Wednesday: 10:15 – 12:30 and 14:00 – 17:00 
-* Thursday: 10:15 – 12:30 and 14:00 – 16:30 
+* Wednesday: 10:15 – 12:00 and 14:00 – 17:00 
+* Thursday: 10:15 – 12:30 and 14:00 – 17:00 
 * Friday: 10:15 – 12:30 
 
 
