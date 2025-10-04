@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.17.3
+    jupytext_version: 1.17.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -55,7 +55,7 @@ If necessary, please install Keras by uncommenting the next line.
 ```{code-cell} ipython3
 :hide-output: false
 
-#!pip install --upgrade keras
+!pip install --upgrade keras
 ```
 
 Now we specify that the desired backend is JAX.
@@ -123,10 +123,10 @@ def generate_data(x_min=0,           # Minimum x value
                   seed=1234):
     np.random.seed(seed)
     x = np.linspace(x_min, x_max, num=data_size)
-    
+    # y = f(x) + ϵ with f as below
     ϵ = 0.2 * np.random.randn(data_size)
     y = x**0.5 + np.sin(x) + ϵ
-    # Keras expects two dimensions, not flat arrays
+    # Transform to column vectors (Keras expects two dimensions, not flat arrays)
     x, y = [np.reshape(z, (data_size, 1)) for z in (x, y)]
     return x, y
 ```
@@ -244,12 +244,14 @@ def plot_loss_history(training_history, ax):
     `fit` method of a given model.
     """
     epochs = training_history.epoch
+    training_losses = training_history.history['loss']
+    validation_losses = training_history.history['val_loss']
     ax.plot(epochs, 
-            np.array(training_history.history['loss']), 
+            training_losses, 
             label='training loss')
     # Plot MSE of validation data against epoch
     ax.plot(epochs, 
-            np.array(training_history.history['val_loss']),
+            validation_losses,
             label='validation loss')
     # Add labels
     ax.set_xlabel('Epoch')
@@ -279,8 +281,12 @@ Now we train the model using the training data.
 :hide-output: false
 
 training_history = regression_model.fit(
-    x, y, batch_size=x.shape[0], verbose=0,
-    epochs=2000, validation_data=(x_validate, y_validate))
+    x, y, 
+    batch_size=x.shape[0], 
+    verbose=0,
+    epochs=2000, 
+    validation_data=(x_validate, y_validate)
+)
 ```
 
 Let’s have a look at the evolution of MSE as the model is trained.
@@ -348,8 +354,12 @@ nn_model = build_nn_model()
 :hide-output: false
 
 training_history = nn_model.fit(
-    x, y, batch_size=x.shape[0], verbose=0,
-    epochs=2000, validation_data=(x_validate, y_validate))
+    x, y, 
+    batch_size=x.shape[0], 
+    verbose=0,
+    epochs=2000, 
+    validation_data=(x_validate, y_validate)
+)
 ```
 
 ```{code-cell} ipython3
@@ -399,8 +409,6 @@ plt.show()
 ```
 
 Not surprisingly, the multilayer neural network does a much better job of fitting the data.
-
-In a [a follow-up lecture](https://jax.quantecon.org/jax_nn.html), we will try to achieve the same fit using pure JAX, rather than relying on the Keras front-end.
 
 ```{code-cell} ipython3
 

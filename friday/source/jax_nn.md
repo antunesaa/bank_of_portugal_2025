@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.17.3
+    jupytext_version: 1.17.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -52,13 +52,13 @@ from time import time
 ```{code-cell} ipython3
 :hide-output: false
 
-# !pip install keras  # Uncomment if not installed
+#!pip install keras  # Uncomment if not installed
 ```
 
 ```{code-cell} ipython3
 :hide-output: false
 
-# !pip install optax  # Uncomment if not installed
+#!pip install optax  # Uncomment if not installed
 ```
 
 ```{code-cell} ipython3

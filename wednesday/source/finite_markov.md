@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.16.1
+    jupytext_version: 1.17.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -30,9 +30,6 @@ kernelspec:
 
 ## Overview
 
-Markov chains are one of the most useful classes of stochastic processes.
-
-They are flexible and supported by many elegant theoretical results, as well as being central to quantitative modeling.
 
 In this lecture, we 
 
@@ -121,14 +118,14 @@ Consider a worker who, at any given time $ t $, is either unemployed (state 0) o
 
 Suppose that, over a one month period,
 
-1. An unemployed worker finds a job with probability $ \alpha \in (0, 1) $.  
-1. An employed worker loses her job and becomes unemployed with probability $ \beta \in (0, 1) $.  
+1. An unemployed worker finds a job with probability $ f \in (0, 1) $.
+1. An employed worker loses her job and becomes unemployed with probability $ s \in (0, 1) $.
 
 
 In terms of a Markov model, we have
 
-- $ S = \{ 0, 1\} $  
-- $ P(0, 1) = \alpha $ and $ P(1, 0) = \beta $  
+- $ S = \{ 0, 1\} $
+- $ P(0, 1) = f $ and $ P(1, 0) = s $  
 
 
 We can write out the transition probabilities in matrix form as
@@ -137,13 +134,13 @@ $$
 P
 = \left(
 \begin{array}{cc}
-    1 - \alpha & \alpha \\
-    \beta      & 1 - \beta
+    1 - f & f \\
+    s      & 1 - s
 \end{array}
-  \right) 
+  \right)
 $$
 
-Once we have the values $ \alpha $ and $ \beta $, we can address a range of questions, such as
+Once we have the values $ f $ and $ s $, we can address a range of questions, such as
 
 - What is the average duration of unemployment?  
 - Over the long-run, what fraction of time does a worker find herself unemployed?  
@@ -469,8 +466,8 @@ To compute $P^6$ we use `np.power`.
 P = ((0.971, 0.029, 0.0), 
      (0.145, 0.778, 0.077), 
      (0.0,   0.508, 0.492))
-
-ψ @ np.power(P, 6) @ (0, 1, 1)
+pr = ψ @ np.power(P, 6) @ (0, 1, 1)
+print(f"Probability of recession = {pr:.4f}.")
 ```
 
 ### Irreducibility
@@ -559,6 +556,10 @@ It's also true that an $n \times n$ stochastic matrix $P$ is irreducible if and 
 Write a function that checks irreducibility of given $P$ using this result and test it on $P_1$ and $P_2$ above.
 
 ```{code-cell} ipython3
+# Put your code here
+```
+
+```{code-cell} ipython3
 for i in range(12):
     print("Solution below.")
 ```
@@ -577,11 +578,11 @@ def is_irreducible(P):
 ```
 
 ```{code-cell} ipython3
-is_irreducible(P_1)
+print(is_irreducible(P_1))
 ```
 
 ```{code-cell} ipython3
-is_irreducible(P_2)
+print(is_irreducible(P_2))
 ```
 
 ### Aperiodicity
@@ -682,19 +683,19 @@ A sufficient condition for aperiodicity and irreducibility is that every element
 
 Recall our model of the employment/unemployment dynamics.
 
-Assuming $ \alpha \in (0,1) $ and $ \beta \in (0,1) $, the uniform ergodicity condition is satisfied.
+Assuming $ f \in (0,1) $ and $ s \in (0,1) $, the uniform ergodicity condition is satisfied.
 
 Let $ \psi^* = (p, 1-p) $ be the stationary distribution, so that $ p $ corresponds to unemployment (state 0).
 
 Using $ \psi^* = \psi^* P $ and a bit of algebra yields
 
 $$
-    p = \frac{\beta}{\alpha + \beta}
+    p = \frac{s}{f + s}
 $$
 
 This is, in some sense, a steady state probability of unemployment — more about the  interpretation of this below.
 
-Not surprisingly it tends to zero as $ \beta \to 0 $, and to one as $ \alpha \to 0 $.
+Not surprisingly it tends to zero as $ s \to 0 $, and to one as $ f \to 0 $.
 
 +++
 
@@ -748,14 +749,15 @@ def compute_stationary_via_eigenvecs(P):
     The corresponding eigenvector is the stationary distribution.
     """
     P = np.array(P)
-    out = sp.linalg.eig(P, right=False)
-    i = np.argmax(out.eigenvalues)  # index of largest eigenvalue
-    dominant_eigvec = out.eigenvectors[:, i] 
+    eigenvalues, eigenvectors = sp.linalg.eig(P.T)     # transpose for left eigenvectors
+    i = np.argmax(np.abs(eigenvalues))                 # index of largest eigenvalue
+    dominant_eigvec = eigenvectors[:, i]               # extract dominant eigenvector
     ψ_star = dominant_eigvec / np.sum(dominant_eigvec) # normalize
-    return ψ_star
+    return np.real(ψ_star)  # return real part
 ```
 
 ```{code-cell} ipython3
+ψ_star = compute_stationary_via_eigenvecs(P)
 ψ_star
 ```
 
@@ -813,4 +815,6 @@ Here
 
 You might like to try experimenting with different initial conditions.
 
-+++
+```{code-cell} ipython3
+
+```
