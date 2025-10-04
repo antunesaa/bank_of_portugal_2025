@@ -1,0 +1,650 @@
+\input{../../preamble}
+
+\title{Google JAX}
+\subtitle{Prepared for the Bank of Portugal Computational Economics Course}
+
+\author{John Stachurski}
+
+
+\date{October 2025}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+
+
+\begin{frame}
+    \frametitle{Topics}
+
+    \begin{itemize}
+        \item What's JAX?
+        \vspace{0.5em}
+        \item JIT compilation
+        \vspace{0.5em}
+        \item Autodiff
+        \vspace{0.5em}
+        \item Array operations
+        \vspace{0.5em}
+        \item Functional programming
+    \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}
+
+    \begin{figure}
+       \centering
+       \scalebox{0.4}{\includegraphics{logo.pdf}}
+    \end{figure}
+    
+            \vspace{0.5em}
+
+    \begin{center}
+        \url{https://jax.readthedocs.io/en/latest/}
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    
+    A high-performance numerical computing library 
+
+            \vspace{0.5em}
+            \vspace{0.5em}
+
+    \begin{itemize}
+        \item Developed by \href{https://research.google/}{Google Research}
+            \vspace{0.5em}
+        \item Conforms to NumPy API for array operations
+            \vspace{0.5em}
+        \item GPU/TPU acceleration 
+            \vspace{0.5em}
+        \item Automatic differentiation
+            \vspace{0.5em}
+        \item Math-centric library semantics
+    \end{itemize}
+
+            \vspace{0.5em}
+            \vspace{0.5em}
+
+    ``The JAX compiler aims to enable researchers to write Python programs\ldots
+    that are \textbf{automatically} compiled and scaled to leverage accelerators and
+        supercomputers''
+
+\end{frame}
+
+\begin{frame}
+    
+    \Eg AlphaFold3 is built with Google JAX
+
+        \vspace{0.5em}
+
+    \begin{figure}
+       \begin{center} % l b r t
+        \scalebox{.24}{\includegraphics{af.pdf}}
+       \end{center}
+    \end{figure}
+
+
+\end{frame}
+
+\begin{frame}
+    
+    \textbf{Highly accurate protein structure prediction with AlphaFold}
+
+        \vspace{0.5em}
+    John Jumper, Richard Evans, Alexander Pritzel, Tim Green, Michael Figurnov,
+    Olaf Ronneberger, Kathryn Tunyasuvunakool,\ldots 
+
+        \vspace{0.5em}
+    \underline{Nature} Vol.\ 596 (2021)
+
+    \vspace{0.5em}
+    \vspace{0.5em}
+    \vspace{0.5em}
+    \vspace{0.5em}
+    \begin{itemize}
+        \item Citation count $= ~35$K
+        \vspace{0.5em}
+        \item Nobel Prize in Chemistry 2024
+    \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}
+
+    ``The acronym JAX stands for \brown{Just After eXecution}''
+
+    \begin{itemize}
+        \item monitor function execution once and then compile
+    \end{itemize} 
+
+            \vspace{0.5em}
+            \vspace{0.5em}
+            \vspace{0.5em}
+
+    Another acronym:
+
+    \begin{itemize}
+        \item \brown{J}ust-in-time compilation
+            \vspace{0.5em}
+        \item \brown{A}utomatic differentiation
+            \vspace{0.5em}
+        \item \brown{X}LA (accelerated linear algebra)
+    \end{itemize}
+
+
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Familiar NumPy-style array API}
+
+    \begin{minted}{python}
+        import jax.numpy as jnp
+
+        A = ((2.0, -1.0),
+             (5.0, -0.5))
+
+        b = (0.5, 1.0)
+
+        A, b = jnp.array(A), jnp.array(b)
+
+        x = jnp.inv(A) @ b
+    \end{minted}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Implicit JIT via the XLA pipeline}
+
+    The sequence of actions for performing \texttt{jnp.inv(A)} are as follows:
+
+    %
+    \begin{enumerate}
+        \item JAX identifies that it needs to invert a matrix \texttt{A} of
+            specific data type and shape
+        \vspace{0.5em}
+        \item JAX passes this information to XLA in an intermediate
+            representation
+        \vspace{0.5em}
+        \item XLA \brown{generates compiled code specialized to your hardware, the 
+            data type and shape of the array}
+        \vspace{0.5em}
+        \item The code is executed on the device and the result is returned to
+            the user
+        \vspace{0.5em}
+        \item The code is cached in memory for future use (when called again
+            with the same specific dtype and shape)
+    \end{enumerate}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+    \frametitle{Explicit just-in-time compilation}
+
+    We can also explicitly JIT compile JAX functions
+    
+    \begin{minted}{python}
+@jax.jit
+def f(x):
+    term1 = 2 * jnp.sin(3 * x) * jnp.cos(x/2)
+    term2 = 0.5 * x**2 * jnp.cos(5*x) / (1 + 0.1 * x**2)
+    term3 = 3 * jnp.exp(-0.2 * (x - 4)**2) * jnp.sin(10*x)
+    return term1 + term2 + term3 
+    \end{minted}
+
+    \vspace{0.5em}
+    \vspace{0.5em}
+
+    \begin{itemize}
+        \item Compiles at first call (e.g., \texttt{result = f(x)})
+        \item Compiler specializes on \brown{both} shape and data type
+    \end{itemize}
+
+\end{frame}
+
+
+
+\begin{frame}
+    
+    Compiler tools for optimizing function operations:
+
+    \begin{itemize}
+        \item Operations combined into fused kernels for GPU/TPU
+        \vspace{0.5em}
+        \item Eliminate intermediate buffers / memory writes and reads
+        \vspace{0.5em}
+        \item Loop unrolling
+        \vspace{0.5em}
+        \item Specialized algorithms
+        \vspace{0.5em}
+        \item Memory layout optimization for multi-dimensional arrays
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+
+    Implicit and explicit JIT 
+
+    \begin{figure}[h!]
+        \centering
+        \scalebox{0.45}{\input{compiler_diagram.tex}}
+    \end{figure}
+    
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]
+    \frametitle{Automatic differentiation}
+    
+    \vspace{-1em}
+    \begin{minted}{python}
+import jax.numpy as jnp
+from jax import grad, jit
+
+def f(θ, x):
+  for W, b in θ:
+    w = x @ W + b
+    x = jnp.tanh(w)  
+  return x
+
+def loss(θ, x, y):
+  return jnp.sum((y - f(θ, x))**2)
+
+grad_loss = jit(grad(loss))  # Now use gradient descent 
+    \end{minted}
+
+\end{frame}
+
+
+
+\begin{frame}{More features of JAX}
+
+    Let's review some other features
+
+        \vspace{0.5em}
+
+    \begin{itemize}
+        \item Functional programming
+        \vspace{0.5em}
+        \item PyTrees
+    \end{itemize}
+    
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Functional Programming}
+    
+    JAX adopts a \underline{functional} programming style
+
+    \vspace{0.5em}
+    \begin{itemize}
+        \item[] $\implies$ Functions are \brown{pure}
+    \end{itemize}
+
+
+    \begin{minted}{python}
+
+def f(θ, x):
+  for W, b in θ:
+    w = W @ x + b
+    x = jnp.tanh(w)  
+  return x
+
+def loss(θ, x, y):
+  return jnp.sum((y - f(θ, x))**2)
+
+    \end{minted}
+
+
+\end{frame}
+
+\begin{frame}
+    
+    Pure functions:
+
+    \begin{enumerate}
+        \item \brown{Deterministic}
+        \vspace{0.5em}
+        \item \brown{No side effects}
+    \end{enumerate}
+
+
+    Deterministic means
+
+    \begin{itemize}
+        \item Same input $\implies$ same output 
+        \vspace{0.5em}
+        \item Outputs do not depend on global state
+    \end{itemize}
+
+
+    No side effects
+
+    \begin{itemize}
+        \item Won't change global state
+        \vspace{0.5em}
+        \item Won't modify data passed to the function (immutable data)
+    \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+
+    A \brown{non-pure} function
+    \vspace{0.5em}
+    \vspace{0.5em}
+
+    \begin{minted}{python}
+tax_rate = 0.1 
+prices = [10.0, 20.0] 
+
+def add_tax(prices):
+    for i, price in enumerate(prices):
+        prices[i] = price * (1 + tax_rate)    
+    print('Modified prices: ', prices)
+    return prices
+    \end{minted}
+
+    \vspace{0.5em}
+    \vspace{0.5em}
+    \vspace{0.5em}
+    Why is this not pure?
+    
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+
+    A \brown{pure} function
+    \vspace{0.5em}
+    \vspace{0.5em}
+
+    \begin{minted}{python}
+tax_rate = 0.1 
+prices = (10.0, 20.0) 
+
+def add_tax_pure(prices, tax_rate):
+    return [price * (1 + tax_rate) for price in prices]
+    \end{minted}
+    
+\end{frame}
+
+
+\begin{frame}
+
+    General advantages:
+
+    \begin{itemize}
+        \item Helps testing: each function can operate in isolation
+        \vspace{0.5em}
+        \item Promotes deterministic behavior and hence reproducibility
+        \vspace{0.5em}
+        \item Prevents bugs that arise from mutating shared state
+    \end{itemize}
+
+\end{frame}
+
+
+
+\begin{frame}
+    
+    Advantages for JAX:
+
+     \begin{itemize}
+        \item Data dependencies are explicit, which helps with optimizing complex computations 
+        \vspace{0.5em}
+         \item Pure functions are easier to differentiate (autodiff)
+        \vspace{0.5em}
+         \item Pure functions are easier to parallelize and optimize (don't
+             depend on shared mutable state)
+     \end{itemize}
+
+        \vspace{0.5em}
+        \vspace{0.5em}
+
+     In summary, functional programming is good for 
+     %
+     \begin{itemize}
+         \item JIT, autodiff, \& parallelization
+     \end{itemize}
+
+
+\end{frame}
+
+
+
+\begin{frame}
+    \frametitle{JAX PyTrees}
+
+    Consider a function of the form
+    %
+    \begin{equation*}
+        f_\theta
+        = G_{m} \circ G_{m-1} \circ \cdots \circ G_{2}  \circ G_{1}
+    \end{equation*}
+    %
+    where
+    %
+    \begin{itemize}
+        \item $G_{\ell} x = \sigma_\ell(x W_\ell + b_\ell)$ 
+            for $\ell = 1, \ldots, m$
+        \vspace{0.5em}
+        \item $\theta$ represents the ``vector'' of all parameters
+        \vspace{0.5em}
+        \item $\sigma_\ell$ is a given function
+    \end{itemize}
+
+        \vspace{0.5em}
+        \vspace{0.5em}
+    The idea that the vector $\theta$ contains all parameters is conceptually
+    useful but awkward within code\ldots
+
+
+
+\end{frame}
+
+
+\begin{frame}
+
+    To handle these kinds of situations we can use PyTrees
+    
+    \begin{itemize}
+        \item A tree-like data structure built from Python containers
+        \vspace{0.5em}
+        \item A concept, not a data type
+        \vspace{0.5em}
+        \item Used to store parameters
+    \end{itemize}
+
+    \vspace{0.5em}
+    \vspace{0.5em}
+    \Egs
+
+    \begin{itemize}
+        \item A list of dictionaries, each dictionary contains parameters
+        \item A dictionary of lists 
+        \item A dictionary of lists of dictionaries
+        \item etc.
+    \end{itemize}
+
+\end{frame}
+
+
+
+
+\begin{frame}
+    
+    
+    \resizebox{0.9\textwidth}{!}{
+        \input{pytree_fig}
+    }
+
+\end{frame}
+
+
+\begin{frame}
+    
+    JAX can
+
+    \begin{itemize}
+        \item apply functions to all leaves in a PyTree structure
+        \vspace{0.5em}
+        \item differentiate functions with respect to the leaves of PyTrees
+        \vspace{0.5em}
+        \item etc.
+    \end{itemize}
+
+
+\end{frame}
+
+\begin{frame}
+    
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[
+  scale=0.5, transform shape, % Scale down the entire figure
+  level distance=1.5cm,
+  level 1/.style={sibling distance=2.5cm},
+  level 2/.style={sibling distance=2cm},
+  every node/.style={draw, rounded corners, fill=white, drop shadow, align=center, font=\sffamily},
+  edge from parent/.style={thick, draw, -{Stealth[length=6pt]}},
+  pytree/.style={draw, rounded corners, fill=blue!10, minimum width=1.8cm, minimum height=0.9cm},
+  pytree2/.style={draw, rounded corners, fill=green!10, minimum width=1.8cm, minimum height=0.9cm},
+  result/.style={draw, rounded corners, fill=purple!10, minimum width=1.8cm, minimum height=0.9cm},
+  operation/.style={draw, circle, fill=red!20, inner sep=2pt}
+]
+
+% First pytree - unchanged
+\node[pytree] (root1) at (-5,0) {pytree1};
+\node[pytree, below left=1.5cm and 1.2cm of root1] (a1) {\texttt{'a'}: [1, 2, 3]};
+\node[pytree, below right=1.5cm and 1.2cm of root1] (b1) {\texttt{'b'}: dict};
+\node[pytree, below left=1.5cm and 0.4cm of b1] (c1) {\texttt{'c'}: [4, 5, 6]};
+\node[pytree, below right=1.5cm and 0.4cm of b1] (d1) {\texttt{'d'}: 7};
+
+\draw[edge from parent] (root1) -- (a1);
+\draw[edge from parent] (root1) -- (b1);
+\draw[edge from parent] (b1) -- (c1);
+\draw[edge from parent] (b1) -- (d1);
+
+% Second pytree - unchanged
+\node[pytree2] (root2) at (5,0) {pytree2};
+\node[pytree2, below left=1.5cm and 1.2cm of root2] (a2) {\texttt{'a'}: [10, 20, 30]};
+\node[pytree2, below right=1.5cm and 1.2cm of root2] (b2) {\texttt{'b'}: dict};
+\node[pytree2, below left=1.5cm and 0.4cm of b2] (c2) {\texttt{'c'}: [40, 50, 60]};
+\node[pytree2, below right=1.5cm and 0.4cm of b2] (d2) {\texttt{'d'}: 70};
+
+\draw[edge from parent] (root2) -- (a2);
+\draw[edge from parent] (root2) -- (b2);
+\draw[edge from parent] (b2) -- (c2);
+\draw[edge from parent] (b2) -- (d2);
+
+
+% Result pytree - shifted down from -6 to -7.5
+\node[result] (rootR) at (0,-7.5) {result};
+\node[result, below left=1.5cm and 1.2cm of rootR] (aR) {\texttt{'a'}: [11, 22, 33]};
+\node[result, below right=1.5cm and 1.2cm of rootR] (bR) {\texttt{'b'}: dict};
+\node[result, below left=1.5cm and 0.4cm of bR] (cR) {\texttt{'c'}: [44, 55, 66]};
+\node[result, below right=1.5cm and 0.4cm of bR] (dR) {\texttt{'d'}: 77};
+
+\draw[edge from parent] (rootR) -- (aR);
+\draw[edge from parent] (rootR) -- (bR);
+\draw[edge from parent] (bR) -- (cR);
+\draw[edge from parent] (bR) -- (dR);
+
+% Arrows from input pytrees to result - adjusted for new result position
+%\draw[-{Stealth[length=6pt]}, thick, dashed, red] (root1) to[out=-30, in=150] (rootR);
+%\draw[-{Stealth[length=6pt]}, thick, dashed, red] (root2) to[out=-150, in=30] (rootR);
+
+
+\end{tikzpicture}
+\caption{\texttt{jax.tree.map(lambda x, y: x + y, pytree1, pytree2)}}
+\end{figure}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+    
+    \begin{minted}{python}
+# Apply gradient updates to all parameters
+def sgd_update(params, grads, learning_rate):
+    return jax.tree.map(
+        lambda p, g: p - learning_rate * g, 
+        params, 
+        grads
+    )
+
+# Calculate gradients (PyTree with same structure as params)
+loss_grad = jax.grad(loss_fn)
+grads = loss_grad(params, x, y)
+
+# Update all parameters at once
+updated_params = sgd_update(params, grads, 0.01)    
+    \end{minted}
+
+\end{frame}
+
+
+\begin{frame}{Summary}
+    
+    Advantages over NumPy / MATLAB
+
+    \vspace{0.5em}
+    \begin{itemize}
+        \item Machine code specialized to data types, shapes and devices!
+        \vspace{0.5em}
+        \vspace{0.5em}
+        \item Automatically matches tasks with accelerators
+        \vspace{0.5em}
+        \vspace{0.5em}
+        \item Same code, multiple backends (CPUs, GPUs, TPUs)
+        \vspace{0.5em}
+        \vspace{0.5em}
+        \item Can fuse array operations for speed and memory efficiency
+        \vspace{0.5em}
+        \vspace{0.5em}
+        \item Elegant functional style
+        \vspace{0.5em}
+        \vspace{0.5em}
+        \item Integrated efficient autodiff
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+
+    Advantages of JAX (vs PyTorch / Tensorflow / etc.) for economists:
+    %
+    \begin{itemize}
+        \item elegant functional programming style -- close to maths
+            \vspace{0.5em}
+        \item elegant autodiff tools
+            \vspace{0.5em}
+        \item array operations follow standard NumPy API
+    \end{itemize}
+
+            \vspace{0.5em}
+            \vspace{0.5em}
+
+    Exposes low level functions 
+
+\end{frame}
+
+
+\end{document}

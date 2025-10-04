@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.16.1
+    jupytext_version: 1.17.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -74,8 +74,7 @@ people have $(100 \times y)$\% of all wealth.
 
 Let's look at an example.
 
-First we generate $n=2000$ draws from a lognormal distribution and treat these draws as our population.  
-
+First we generate $n=2000$ draws from a lognormal distribution and treat these draws as our population.
 
 ```{code-cell} ipython3
 n = 2000
@@ -88,11 +87,15 @@ We then generate the Lorenz curve using a routine from `quantecon`.
 x, y = qe.lorenz_curve(sample)            # QuantEcon routine (no need to sort)
 ```
 
+Now `x` and `y` contain the sample points $x_i$, $y_i$.
+
 Now let's plot.
+
+In what follows, Matplotlib will supply the interpolation mentioned above.
 
 The straight line ($x=L(x)$ for all $x$) corresponds to perfect equality.  
 
-The lognormal draws produce a less equal distribution.  
+The lognormal draws produce a less equal distribution.
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots()
@@ -106,7 +109,6 @@ ax.vlines(x[j], [0.0], y[j], alpha=0.5, colors='k', ls='--')
 ax.hlines(y[j], [0], x[j], alpha=0.5, colors='k', ls='--')
 plt.show()
 ```
-
 
 For example, if we imagine these draws as being observations of wealth across a
 sample of households, then the dashed lines show that the bottom 80\% of
@@ -129,7 +131,7 @@ Try to replicate the figure above, using the same lognormal data set.
 ```
 
 ```{code-cell} ipython3
-for i in range(12):
+for i in range(20):
     print("Solution below.")
 ```
 
@@ -162,7 +164,6 @@ j = 1600  # dashed lines for j-th element
 ax.vlines(x[j], [0.0], y[j], alpha=0.5, colors='k', ls='--')
 ax.hlines(y[j], [0], x[j], alpha=0.5, colors='k', ls='--')
 plt.show()
-
 ```
 
 ## The Gini coefficient
@@ -222,7 +223,6 @@ The plots show that inequality rises with $\sigma$ (as measured by the Gini coef
 
 +++
 
-
 **Exercise**
 
 Using the definition above and NumPy, try to write your own version of
@@ -276,3 +276,10 @@ ax.set_ylabel('Gini coefficient', fontsize=12)
 plt.show()
 ```
 
+```{code-cell} ipython3
+
+```
+
+```{code-cell} ipython3
+
+```
