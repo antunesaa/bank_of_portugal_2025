@@ -44,7 +44,7 @@ $$
 
 We use this known exact solution to check our numerical methods.
 
-Initial wealth $w_0$ is fixed at 1.0, os the objective function is
+Initial wealth $w_0$ is fixed at 1.0, so the objective function is
 
 $$
     \max_{\sigma \in \Sigma} v_\sigma(w_0)
@@ -149,6 +149,7 @@ def initialize_network(key, layer_sizes):
     params = []
     # For all layers but the output layer
     for i in range(len(layer_sizes) - 1):
+        # Build a layer of the network
         key, subkey = jax.random.split(key)
         layer = initialize_layer(
             layer_sizes[i],      # in dimension for layer

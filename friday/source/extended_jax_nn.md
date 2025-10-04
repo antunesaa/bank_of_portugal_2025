@@ -1,14 +1,16 @@
 ---
-jupytext:
-  text_representation:
-    extension: .md
-    format_name: myst
-    format_version: 0.13
-    jupytext_version: 1.17.3
-kernelspec:
-  display_name: Python 3 (ipykernel)
-  language: python
-  name: python3
+jupyter:
+  jupytext:
+    default_lexer: ipython3
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.3'
+      jupytext_version: 1.17.2
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
 ---
 
 # Advanced Nonlinear Regression with JAX
@@ -31,7 +33,7 @@ At the same time, you will recognize many of the same core ideas.
 
 We begin with the following imports.
 
-```{code-cell} ipython3
+```python
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -44,7 +46,7 @@ from time import time
 
 Let's check our environment.
 
-```{code-cell} ipython3
+```python
 print(f"Using JAX version: {jax.__version__}")
 print(f"Device: {jax.devices()[0]}")
 ```
@@ -53,7 +55,7 @@ print(f"Device: {jax.devices()[0]}")
 
 The default configuration will have around 21,000 parameters
 
-```{code-cell} ipython3
+```python
 # Configuration
 class Config:
     # Data parameters
@@ -77,7 +79,7 @@ class Config:
 
 Here is the function we will try to recover from noisy data.
 
-```{code-cell} ipython3
+```python
 @jax.jit
 def f(x):
     """
@@ -94,7 +96,7 @@ def f(x):
 
 As you can see, this function is quite complex.
 
-```{code-cell} ipython3
+```python
 x_grid = jnp.linspace(-10.0, 10.0, 200)
 fig, ax = plt.subplots()
 y_true = f(x_grid)
@@ -109,7 +111,7 @@ plt.show()
 
 We will use the following function to produce noisy observations of $f$.
 
-```{code-cell} ipython3
+```python
 def generate_data(
         key: jax.Array,
         data_size: int = Config.data_size
@@ -132,13 +134,12 @@ def generate_data(
 
 ## Constructing a network
 
-+++
 
 Previously we used a dictionary to store the weights and biases associated with a single layer.
 
 Here we will used a `NamedTuple`, which feels slightly more elegant in scientific work.
 
-```{code-cell} ipython3
+```python
 class LayerParams(NamedTuple):
     """
     Stores parameters for one layer of the neural network.
@@ -154,7 +155,7 @@ We use standard initialization procedures according to the specified activation 
 
 The next function initializes parameters in a single layer.
 
-```{code-cell} ipython3
+```python
 def init_layer_params(
         key: jax.Array, 
         in_dim: int, 
@@ -194,7 +195,7 @@ def init_layer_params(
 
 Here's a function that uses the preceding logic to construct a Pytree of suitably initialized network parameters.
 
-```{code-cell} ipython3
+```python
 def initialize_network_params(
         key: jax.Array, 
         layer_sizes: List[int],
@@ -223,7 +224,7 @@ def initialize_network_params(
 
 Here's a jitted function that maps inputs to outputs for a given parameterization of the network.
 
-```{code-cell} ipython3
+```python
 @partial(jax.jit, static_argnames=['activation'])
 def forward(
         θ: List[LayerParams], 
@@ -269,11 +270,10 @@ def forward(
 
 ## Loss
 
-+++
 
 The next function calculates loss associated with a given prediction vector in terms of MSE, conditional on the data set.
 
-```{code-cell} ipython3
+```python
 @partial(jax.jit, static_argnames=['activation'])
 def mse_loss(
         params: List[LayerParams], 
@@ -292,7 +292,7 @@ def mse_loss(
 
 When we compute loss, we will use a small amount of regularization to help prevent us from overfitting the existing data set.
 
-```{code-cell} ipython3
+```python
 @partial(jax.jit, static_argnames=['activation'])
 def regularized_loss(
         params: List[LayerParams], 
@@ -325,7 +325,7 @@ containing all parameters.
 
 The update uses Optax.
 
-```{code-cell} ipython3
+```python
 def training_step_factory(optimizer, activation: str = Config.activation):
     """
     Create a JIT-compiled training step function.
@@ -355,7 +355,7 @@ The role of the schedule is to adjust the learning rate as training progresses.
 
 For details we refer to the Optax documentation.
 
-```{code-cell} ipython3
+```python
 def create_lr_schedule():
     warmup_fn = optax.linear_schedule(
         init_value=0.0,
@@ -385,7 +385,7 @@ pairs.
 The collection of batches in the list can be understood as a random partition of
 the data set, where each element of the partition has the same size.
 
-```{code-cell} ipython3
+```python
 def create_data_batch_iterator(
         x: jnp.ndarray, 
         y: jnp.ndarray, 
@@ -421,20 +421,20 @@ We are ready to train the network.
 
 First we set the seed.
 
-```{code-cell} ipython3
+```python
 SEED = 42 # Set random seed for reproducibility
 key = jax.random.PRNGKey(SEED)
 ```
 
 Now we produce separate keys for training and validation data.
 
-```{code-cell} ipython3
+```python
 key, train_data_key, val_data_key = jax.random.split(key, 3)
 ```
 
 Next we generate training and validation data
 
-```{code-cell} ipython3
+```python
 print("Generating data...")
 train_data_size = Config.data_size
 x_train, y_train = generate_data(train_data_key, train_data_size)
@@ -444,7 +444,7 @@ x_val, y_val = generate_data(val_data_key, val_data_size)
 
 We also define model architecture and activation function.
 
-```{code-cell} ipython3
+```python
 input_dim = 1  # scalar input
 output_dim = 1 # scalar output
 layer_sizes = [input_dim] + Config.hidden_layers + [output_dim]
@@ -454,7 +454,7 @@ print(f"Using activation function: {activation}")
 
 Let's initialize all the parameters in the network
 
-```{code-cell} ipython3
+```python
 print(f"Initializing model with layer sizes: {layer_sizes}")
 key, subkey = jax.random.split(key)
 θ = initialize_network_params(subkey, layer_sizes, activation)
@@ -465,7 +465,7 @@ Now let's train the network.
 Note that we are training a relatively large network and hence the training
 process takes a nontrivial amount of time.
 
-```{code-cell} ipython3
+```python
 # Create optimizer with learning rate schedule
 lr_schedule = create_lr_schedule()
 optimizer = optax.chain(
@@ -534,7 +534,7 @@ print(f"Best validation loss: {best_val_loss:.6f}")
 
 Here we plot the MSE curves on training and validation data over epochs.
 
-```{code-cell} ipython3
+```python
 fig, ax = plt.subplots()
 ax.plot(train_losses, label='training Loss')
 ax.plot(np.arange(0, len(val_losses) * Config.eval_every, Config.eval_every), 
@@ -548,7 +548,7 @@ plt.show()
 
 Finally, let's plot the original and fitted functions.
 
-```{code-cell} ipython3
+```python
 x_grid = jnp.linspace(-10.0, 10.0, 200)
 y_pred = forward(θ, x_grid.reshape(-1, 1), activation=activation)
 
