@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.17.3
+    jupytext_version: 1.17.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -232,17 +232,14 @@ print(f"Vectorized P equals loops P: {np.allclose(loops_P, vectorized_P)}")
 print(f"Vmap P equals loops P: {np.allclose(loops_P, vmap_P)}")
 print()
 
-# Show some sample probabilities
-print("Sample transition probabilities P(x=2, a=1, y):")
-for y in range(min(6, model.K + 1)):
-    prob = loops_P[2, 1, y]
-    print(f"P(2, 1, {y}) = {prob:.6f}")
-print()
 
-# Verify that probabilities sum to 1 for each (x, a) pair
+# Verify that probabilities sum to 1 for each feasible (x, a) pair
+# A pair (x, a) is feasible if x + a <= K (capacity constraint)
 prob_sums = np.sum(loops_P, axis=2)
-print(f"All probability sums equal 1: {np.allclose(prob_sums, 1.0)}")
-print(f"Max deviation from 1: {np.max(np.abs(prob_sums - 1.0)):.2e}")
+feasible_mask = np.add.outer(np.arange(model.K + 1), np.arange(model.K + 1)) <= model.K
+feasible_sums = prob_sums[feasible_mask]
+print(f"All feasible probability sums equal 1: {np.allclose(feasible_sums, 1.0)}")
+print(f"Max deviation from 1 (feasible): {np.max(np.abs(feasible_sums - 1.0)):.2e}")
 ```
 
 ## Performance Benchmarking
