@@ -99,8 +99,6 @@ class LayerParams(NamedTuple):
 The next class stores some fixed values that form part of the network training
 configuration.
 
-(Putting them inside a class helps to keep the global namespace clean.)
-
 ```python
 class Config:
     """
@@ -120,7 +118,7 @@ class Config:
 The following function initializes a single layer of the network using Le Cun
 initialization.
 
-(Le Cun initialization is reported to pair well with `selu` activation.)
+(Le Cun initialization is thought to pair well with `selu` activation.)
 
 ```python
 def initialize_layer(in_dim, out_dim, key):
@@ -149,13 +147,14 @@ def initialize_network(key, layer_sizes):
     params = []
     # For all layers but the output layer
     for i in range(len(layer_sizes) - 1):
-        # Build a layer of the network
+        # Build the layer 
         key, subkey = jax.random.split(key)
         layer = initialize_layer(
             layer_sizes[i],      # in dimension for layer
             layer_sizes[i + 1],  # out dimension for layer
             subkey 
         )
+        # And add it to the parameter list
         params.append(layer)
 
     return params
@@ -193,7 +192,7 @@ def u(c, γ):
     return c**(1 - γ) / (1 - γ)
 ```
 
-The next function computes lifetime value associated with a given policy, as
+The next function approximates lifetime value associated with a given policy, as
 represented by the parameters of a neural network.
 
 ```python
@@ -208,11 +207,11 @@ def compute_lifetime_value(params, model, path_length):
     initial_w = 1.0
 
     def update(t, state):
-        # Unpack and compute consumption
+        # Unpack and compute consumption given current wealth
         w, value, discount = state
         consumption_rate = forward(params, w)
         c = consumption_rate * w
-        # Update state and return it
+        # Update loop state and return it
         w = R * (w - c)
         value = value + discount * u(c, γ) 
         discount = discount * β
@@ -287,11 +286,13 @@ expressions.
 
 ```python
 κ = 1 - (β * R**(1 - γ))**(1/γ)
+print(f"Optimal savings rate = {κ}.\n")
 v_max = κ**(-γ) * u(1.0, γ)
-print(f"Maximum possible lifetime value = {v_max}.\n")
+print(f"Theoretical maximum lifetime value = {v_max}.\n")
 ```
 
-Let's now create a learning rate schedule and set up the Optax minimizer, using [Adam](https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Adam).
+Let's now create a learning rate schedule and set up the Optax minimizer, using
+[Adam](https://en.wikipedia.org/wiki/Stochastic_gradient_descent#Adam).
 
 ```python
 lr_schedule = create_lr_schedule()
@@ -319,13 +320,11 @@ for i in range(epochs):
     # Compute value and gradients at existing parameterization
     loss, grads = jax.value_and_grad(loss_function)(params, model, path_length)
     lifetime_value = - loss
+    value_history.append(lifetime_value)
     
     # Update parameters using optimizer
     updates, opt_state = optimizer.update(grads, opt_state)
     params = optax.apply_updates(params, updates)
-    
-    # Store history
-    value_history.append(lifetime_value)
     
     if i % 100 == 0:
         print(f"Iteration {i}: Value = {lifetime_value:.4f}")
@@ -363,13 +362,11 @@ ax.legend()
 plt.show()
 ```
 
-<!-- #region -->
 Let's have a look at paths for consumption and wealth under the learned and
 optimal policies.
 
 
 The figures below show that the learned policies are close to optimal.
-<!-- #endregion -->
 
 ```python
 def simulate_consumption_path(params, T=120):
@@ -435,6 +432,3 @@ plt.tight_layout()
 plt.show()
 ```
 
-```python
-
-```

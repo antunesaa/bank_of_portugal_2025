@@ -33,11 +33,10 @@ powerful implementations available.
 One of the best of these is the automatic differentiation routines contained
 in JAX.
 
-While other software packages also offer this feature, the JAX version is
-particularly powerful because it integrates so well with other core
+The JAX version is intuitive and integrates very well with other core
 components of JAX (e.g., JIT compilation and parallelization).
 
-As we will see in later lectures, automatic differentiation can be used not only
+Automatic differentiation can be used not only
 for AI but also for many problems faced in mathematical modeling, such as
 multi-dimensional nonlinear optimization and root-finding problems.
 
@@ -86,7 +85,7 @@ def f_prime(x):
     "True derivative."
     return 2 * np.exp(2 * x)
 
-def Df(x, h=0.01):
+def Df(x, h=0.05):
     "Approximate derivative (finite difference)."
     return (f(x + h) - f(x))/h
 
@@ -98,7 +97,8 @@ ax.legend()
 plt.show()
 ```
 
-This kind of numerical derivative is often inaccurate and unstable.
+This kind of numerical derivative can be inaccurate and unstable, especially
+in high dimensions / with higher order derivatives
 
 One reason is that
 
@@ -107,8 +107,6 @@ $$
 $$
 
 Small numbers in the numerator and denominator causes rounding errors.
-
-The situation is exponentially worse in high dimensions / with higher order derivatives
 
 +++
 
@@ -500,8 +498,6 @@ plt.show()
 
 +++
 
-## Exercise 3.1
-
 The function `jnp.polyval` evaluates polynomials.
 
 For example, if `len(p)` is 3, then `jnp.polyval(p, x)`  returns
@@ -524,11 +520,14 @@ Set $ k=4 $ and set the initial guess of `params` to `jnp.zeros(k)`.
 Use gradient descent to find the array `params` that minimizes the loss
 function and plot the result (following the examples above).
 
-+++
+```{code-cell} ipython3
+# Put your code here
+```
 
-## Solution to[ Exercise 3.1](https://jax.quantecon.org/#auto_ex1)
-
-Here’s one solution.
+```{code-cell} ipython3
+for _ in range(20):
+    print("Solution below.")
+```
 
 ```{code-cell} ipython3
 :hide-output: false

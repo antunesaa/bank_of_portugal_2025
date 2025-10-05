@@ -27,7 +27,7 @@ draws
 In addition to what's in Anaconda, this lecture will need the QE library:
 
 ```{code-cell} ipython3
-!pip install quantecon  
+#!pip install quantecon  # Uncomment if necessary
 ```
 
 We use the following imports.
@@ -220,8 +220,6 @@ def vfi(
     return new_v, get_greedy(new_v, model)
 ```
 
-+++
-
 ## Computing the solution
 
 Let's set up and solve the model.
@@ -256,7 +254,7 @@ for _ in range(10):
 
 print()
 mean_runtime = jnp.mean(jnp.array(runtimes))
-print(f"Mean runtime for value function iteration = {mean_runtime:.4f}")
+print(f"Mean runtime for value function iteration = {mean_runtime:.4f} seconds")
 print()
 ```
 
@@ -342,7 +340,11 @@ def create_risk_sensitive_js_model(
 Now you need to modify `T` and `get_greedy` and then run value function iteration again.
 
 ```{code-cell} ipython3
-for _ in range(15):
+# Put your code here
+```
+
+```{code-cell} ipython3
+for _ in range(20):
     print("Solution below!")
 ```
 
@@ -441,10 +443,15 @@ Write one version of VFI that can work with both and test that it does the
 same job.
 
 ```{code-cell} ipython3
-for _ in range(15):
+# Put your code here
+```
+
+```{code-cell} ipython3
+for _ in range(20):
     print("Solution below!")
+```
 
-
+```{code-cell} ipython3
 def generic_vfi(
         bellman_operator: Callable,
         get_greedy_function: Callable,
@@ -509,8 +516,6 @@ def compiled_generic_vfi(
     return v, get_greedy_function(v)
 ```
 
-+++
-
 Let's compare speed.
 
 ```{code-cell} ipython3
@@ -530,26 +535,27 @@ jax.block_until_ready(v_star)  # Wait for computation to complete
 non_compiled_time = time.time() - start_time
 print(f"Non-compiled generic VFI time: {non_compiled_time:.4f} seconds")
 
-# Time the compiled version (first run includes compilation time)
-start_time = time.time()
+# Run the compiled version -- warm up to eliminate compile time
 v_star_compiled, σ_star_compiled = compiled_generic_vfi(
     bellman_operator, get_greedy_function, v_zero
 )
-jax.block_until_ready(v_star_compiled)  # Wait for computation to complete
-compiled_time_with_compile = time.time() - start_time
-print(f"Compiled generic VFI time (with compilation): "
-      f"{compiled_time_with_compile:.4f} seconds")
 
-# Time the compiled version again (now pre-compiled)
+# Time the compiled version (now pre-compiled)
 start_time = time.time()
 v_star_compiled, σ_star_compiled = compiled_generic_vfi(
     bellman_operator, get_greedy_function, v_zero
 )
 jax.block_until_ready(v_star_compiled)  # Wait for computation to complete
 compiled_time = time.time() - start_time
-print(f"Compiled generic VFI time (pre-compiled): {compiled_time:.4f} seconds")
+print(f"Compiled generic VFI time: {compiled_time:.4f} seconds")
 
 print(f"Speedup vs non-compiled: {non_compiled_time / compiled_time:.2f}x")
-overhead = compiled_time_with_compile - compiled_time
-print(f"Compilation overhead: {overhead:.4f} seconds")
+```
+
+```{code-cell} ipython3
+
+```
+
+```{code-cell} ipython3
+
 ```

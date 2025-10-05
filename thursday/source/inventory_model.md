@@ -4,7 +4,7 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.17.3
+    jupytext_version: 1.17.2
 kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
@@ -21,6 +21,8 @@ This notebook studies a stochastic dynamic inventory management model and
 computes the optimal policy using
 value function iteration (VFI) and Howard's policy iteration (HPI).
 
++++
+
 ## Notebook Overview
 
 The notebook structure is as follows:
@@ -32,6 +34,8 @@ The notebook structure is as follows:
 
 The notebook uses **JAX** for high-performance numerical computing with
 automatic differentiation and just-in-time compilation.
+
++++
 
 ## Problem Overview
 
@@ -113,7 +117,13 @@ class Model(NamedTuple):
         demand_pmf: jnp.ndarray  # precomputed demand PMF array
 
 
-def create_model(β=0.98, c=0.1, κ=0.8, ϕ=ϕ_geometric, max_demand=100):
+def create_model(
+        β=0.98, 
+        c=0.1, 
+        κ=0.8, 
+        ϕ=ϕ_geometric, 
+        max_demand=100
+    ) -> Model:
     """
     Create a Model instance with precomputed demand PMF.
 
@@ -154,18 +164,20 @@ def P_function(model, x, a, y):
     """
     β, c, κ, demand_pmf = model
     max_demand = len(demand_pmf) - 1
+    
+    # Compute  F(x) = P{D >= x}
+    survival_mask = jnp.arange(max_demand + 1) >= x  # x, x+1, ..., max_demand
+    Fx = jnp.sum(demand_pmf * survival_mask)         
 
     # If action violates capacity constraint, return 0
     capacity_violated = (x + a > K)
 
     # Compute the first term 1{0 <= x + a - y < x} ϕ(x + a - y) 
     d = x + a - y
-    indicator = ((d >= 0) & (d < x) & (d <= max_demand))
+    indicator = ((d >= 0) & (d < x))
     term1 = indicator * demand_pmf[d]
 
-    # Compute the second term 1{y = a} F(x) where F(x) = P{D >= x}
-    survival_mask = jnp.arange(max_demand + 1) >= x
-    Fx = jnp.sum(demand_pmf * survival_mask)
+    # Compute the second term 1{y = a} F(x) 
     indicator = (y == a)
     term2 = indicator * Fx
 
@@ -173,9 +185,7 @@ def P_function(model, x, a, y):
     return jnp.where(capacity_violated, 0.0, term1 + term2)
 ```
 
-### P_array(): Vectorized Computation with vmap
-
-This function leverages JAX's `vmap` to compute the entire 3D transition tensor $P(x, a, y)$ efficiently. 
+The next function leverages JAX's `vmap` to compute the entire 3D transition tensor $P(x, a, y)$ efficiently. 
 
 The nested `vmap` operations vectorize over:
 
@@ -330,8 +340,8 @@ $$(I - \beta P_\sigma) v = r_\sigma$$
 
 The steps are:
 
-- P_sigma extraction: `P[jnp.arange(S), σ, :]` - transition matrix under policy $\sigma$
-- r_sigma construction: `r[jnp.arange(S), σ]` - rewards under policy $\sigma$ 
+- $P_\sigma$ extraction: `P[jnp.arange(S), σ, :]` - transition matrix under policy $\sigma$
+- $r_\sigma$ construction: `r[jnp.arange(S), σ]` - rewards under policy $\sigma$ 
 - Linear system solution: Direct matrix inversion using `jnp.linalg.solve`
 
 ```{code-cell} ipython3
@@ -345,19 +355,19 @@ def policy_evaluation(model, P, r, σ):
     """
     β, c, κ, demand_pmf = model
     S = K + 1
-
+    x_indices = jnp.arange(S)
     # Extract transition probabilities and rewards for the given policy
-    P_sigma = P[jnp.arange(S), σ, :]  
-    r_sigma = r[jnp.arange(S), σ]     # This is where r_sigma is constructed!
+    P_σ = P[x_indices, σ, :]  
+    r_σ = r[x_indices, σ]     
 
     # Solve (I - β P_σ) v = r_σ directly
-    A = jnp.eye(S) - β * P_sigma
-    v = jnp.linalg.solve(A, r_sigma)
+    A = jnp.eye(S) - β * P_σ
+    v = jnp.linalg.solve(A, r_σ)
 
     return v
 ```
 
-Let's look carefully at how we build r_sigma.
+Let's look carefully at how we build `r_σ`.
 
 The reward array `r` has shape `(S, S)` where `S = K + 1` is the size of our state space. 
 
@@ -368,14 +378,10 @@ Given a policy $\sigma$ (represented as an array where `σ[x]` gives the action 
 The line
 
 ```python
-r_sigma = r[jnp.arange(S), σ]
+r_σ = r[x_indices, σ]
 ```
 
-uses fancy indexing to select specific elements from the 2D reward array.
-
-1. `jnp.arange(S)` creates `[0, 1, 2, ..., S-1]` - the row indices (states)
-2. `σ` contains the column indices (actions for each state)
-3. `r[jnp.arange(S), σ]` selects `r[i, σ[i]]` for each `i`
+selects `r[i, σ[i]]` for each `i`
 
 Here's a small example to illustrate r_sigma construction.
 
@@ -383,8 +389,8 @@ Here's a small example to illustrate r_sigma construction.
 # Create a simple 4x4 reward matrix for illustration
 S_example = 4
 r_example = jnp.array([
-    [1.0, 2.0, 3.0, 4.0],  # rewards for state 0
-    [5.0, 6.0, 7.0, 8.0],  # rewards for state 1  
+    [1.0, 2.0, 3.0, 4.0],    # rewards for state 0
+    [5.0, 6.0, 7.0, 8.0],    # rewards for state 1  
     [9.0, 10.0, 11.0, 12.0], # rewards for state 2
     [13.0, 14.0, 15.0, 16.0] # rewards for state 3
 ])
@@ -409,30 +415,24 @@ for i in range(S_example):
     print(f"  r[{i}, {policy_example[i]}] = {r_example[i, policy_example[i]]}")
 print()
 print("Resulting r_sigma:", r_sigma_example)
-print()
-print("Interpretation:")
-for i in range(S_example):
-    print(f"  State {i}: policy chooses action {policy_example[i]}, reward = {r_sigma_example[i]}")
 ```
 
-### policy_improvement(): Greedy Policy Update
+### Greedy Policy Update
 
 The next function computes the greedy policy with respect to current value function:
 
-$$\sigma'(x) = \arg\max_a \left[ r(x,a) + \beta \sum_y P(x,a,y) v(y) \right]$$
+$$\sigma(x) = \arg\max_a \left[ r(x,a) + \beta \sum_y P(x,a,y) v(y) \right]$$
 
 ```{code-cell} ipython3
 @jax.jit
-def policy_improvement(model, P, r, v):
+def get_greedy(model, P, r, v):
     """
     Policy improvement: compute greedy policy with respect to value function v
-    Returns new policy σ'(x) = argmax_a [r(x,a) + β Σ_y P(x,a,y) v(y)]
+    Returns new policy σ(x) = argmax_a [r(x,a) + β Σ_y P(x,a,y) v(y)]
     """
     β, c, κ, demand_pmf = model
-    
     # Compute Q(x,a) = r(x,a) + β Σ_y P(x,a,y) v(y)
     Q = r + β * jnp.sum(P * v, axis=2)
-    
     # Return greedy policy
     return jnp.argmax(Q, axis=1)
 ```
@@ -441,7 +441,7 @@ def policy_improvement(model, P, r, v):
 
 Now we can implement HPI:
 
-1. Initialize: Start with arbitrary policy (e.g., $\sigma^0(x) = 0$ for all $x$)
+1. Initialize: Start with arbitrary policy (e.g., $\sigma(x) = 0$ for all $x$)
 2. Policy Evaluation: Solve for $v^\sigma$ given current policy $\sigma$
 3. Policy Improvement: Compute greedy policy $\sigma'$ with respect to $v^\sigma$
 4. Convergence Check: If $\sigma' = \sigma$, stop; otherwise set $\sigma = \sigma'$ and repeat
@@ -464,16 +464,14 @@ def howard_policy_iteration(model, max_iter=1000, tol=1e-6):
     for i in range(max_iter):
         # Policy evaluation
         v = policy_evaluation(model, P, r, σ)
-
         # Policy improvement
-        new_σ = policy_improvement(model, P, r, v)
-
+        new_σ = get_greedy(model, P, r, v)
         # Check for convergence
         if jnp.array_equal(σ, new_σ):
             return v, new_σ
-
         σ = new_σ
 
+    print(f"Warning: Hit max-iteration bound {max_iter}.")
     return v, σ
 
 
@@ -483,7 +481,7 @@ def get_optimal_policy(model, v):
     """
     P = P_array(model)
     r = reward_array(model)
-    return policy_improvement(model, P, r, v)
+    return get_greedy(model, P, r, v)
 ```
 
 ## Solving the Model: Comparing VFI and Policy Iteration
@@ -514,10 +512,6 @@ print(f"VFI vs HPI - Value functions equal: "
       f"{jnp.allclose(v_vfi, v_hpi, atol=1e-6)}")
 print(f"VFI vs HPI - Policies equal: "
       f"{jnp.array_equal(policy_vfi, policy_hpi)}")
-
-print("\nOptimal Policy (inventory level -> order amount):")
-for x in range(K + 1):
-    print(f"  x={x}: order {policy_vfi[x]} units")
 
 v = v_vfi
 ```

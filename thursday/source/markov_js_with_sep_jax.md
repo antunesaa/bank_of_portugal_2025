@@ -70,7 +70,7 @@ some threshold w*.
 In addition to what's in Anaconda, this lecture will need the QE library:
 
 ```{code-cell} ipython3
-!pip install quantecon  
+#!pip install quantecon  # Uncomment if necessary
 ```
 
 We use the following imports:
@@ -273,7 +273,6 @@ def update_agent(key, is_employed, wage_idx, model, σ_star):
     separation_occurs = jax.random.uniform(key2) < α
     accepts = σ_star[wage_idx]
     
-    # Compute final states directly without intermediate variables
     # If employed: status = 1 if no separation, 0 if separation
     # If unemployed: status = 1 if accepts, 0 if rejects
     final_employment = jnp.where(
@@ -308,18 +307,11 @@ def simulate_employment_path(
     n, w_vals, P, β, c, α = model
     v_star, σ_star = vfi(model)
 
-    # A series wage_path to track the wage that the agent will use to
-    # update their wage offer (constant when employed)
-    wage_path = jnp.zeros(T)
-    # A series to track employment status (0 = unemployed, 1 = employed)
-    employment_status = jnp.zeros(T, dtype=int)
-
     # Start unemployed with uniform wage draw
     key, subkey = jax.random.split(key)
     is_employed = 0
     wage_idx = jax.random.randint(subkey, (), 0, n)
 
-    # Convert to lists for the loop since JAX arrays are immutable
     wage_path_list = []
     employment_status_list = []
 
@@ -422,10 +414,9 @@ def _simulate_cross_section_compiled(key, model, σ_star, n_agents, T):
     def scan_fn(carry, t):
         key, is_employed, wage_indices = carry
         
-        # Record employment status for this time step (no copy needed)
+        # Record employment status for this time step 
         employment_status = is_employed
         
-        # More efficient key splitting
         key, *agent_keys = jax.random.split(key, n_agents + 1)
         agent_keys = jnp.array(agent_keys)
         
@@ -452,7 +443,7 @@ def simulate_cross_section(
         seed: int = 42
     ) -> tuple[jnp.ndarray, jnp.ndarray]:
     """
-    Simulate employment paths for many agents simultaneously using JIT-compiled lax.fori_loop.
+    Simulate employment paths for many agents simultaneously.
 
     Parameters:
     - model: Model instance with parameters
