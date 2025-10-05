@@ -12,7 +12,7 @@ jupyter:
     name: python3
 ---
 
-# Endogenous Grid Method
+# The Endogenous Grid Method
 
 
 ## Overview
@@ -20,14 +20,17 @@ jupyter:
 In this lecture we use the endogenous grid method (EGM) to solve a basic income
 fluctuation (optimal savings) problem.
 
+To keep things simple, the interest rate will be constant and labor income will
+be IID.
 
-```python hide-output=false
+
+```python
 # !pip install quantecon  # Uncomment if necessary
 ```
 
-Imports:
+We will use the following imports.
 
-```python hide-output=false
+```python
 import quantecon as qe
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,28 +43,17 @@ from typing import NamedTuple
 
 Let’s check the GPU we are running
 
-```python hide-output=false
+```python
 !nvidia-smi
 ```
 
-We use 64 bit floating point numbers for extra precision.
+Let's use 64 bit floating point numbers for extra precision.
 
-```python hide-output=false
+```python
 jax.config.update("jax_enable_x64", True)
 ```
 
-## Model class
 
-```python hide-output=false
-class Model(NamedTuple):
-    β: float          # discount factor
-    R: float          # gross interest rate
-    γ: float          # CRRA preference parameter
-    μ: float          # income location parameter
-    ν: float          # income volatility parameter
-    s_array: jax.Array  # savings grid
-    y_draws: jax.Array  # income draws for Monte Carlo
-```
 
 ## Setup
 
@@ -97,9 +89,25 @@ $$
 u(c) = \frac{c^{1 - \gamma}} {1 - \gamma}
 $$
 
-The following function creates a model instance with default parameter values.
 
-```python hide-output=false
+Here's a Model class to store parameters and arrays.
+
+```python
+class Model(NamedTuple):
+    β: float            # discount factor
+    R: float            # gross interest rate
+    γ: float            # CRRA preference parameter
+    μ: float            # income location parameter
+    ν: float            # income volatility parameter
+    s_array: jax.Array  # savings grid
+    y_draws: jax.Array  # income draws for Monte Carlo
+```
+
+
+This function creates an instance with default parameter values.
+
+
+```python
 def create_model(R=1.01,             # gross interest rate
                  β=0.96,             # discount factor
                  γ=1.5,              # CRRA preference parameter
@@ -122,15 +130,18 @@ def create_model(R=1.01,             # gross interest rate
     y_draws = jnp.exp(μ + ν * z_draws)
 
     # Return Model instance
-    return Model(β=β, R=R, γ=γ, μ=μ, ν=ν,
-                 s_array=s_array, y_draws=y_draws)
+    return Model(
+        β=β, R=R, γ=γ, μ=μ, ν=ν, s_array=s_array, y_draws=y_draws
+    )
 ```
+
+
 
 ## Solution method
 
-The state $a_t$ takes values in  $S := \mathbb R_+$.
+The state $a_t$ takes values in $S := \mathbb R_+$.
 
-We aim to compute an optimal consumption policy $ \sigma^* \colon S \to S$, under which dynamics are given by
+We aim to compute an optimal consumption policy $\sigma^* \colon S \to S$, under which dynamics are given by
 
 $$
     c_t = \sigma^*(a_t)
@@ -138,7 +149,6 @@ $$
     a_{t+1} = R (a_t - c_t) + Y_{t+1}
 $$
 
-In this section we discuss how we intend to solve for this policy.
 
 ### Euler equation
 
@@ -146,108 +156,41 @@ The Euler equation for the optimization problem is
 
 $$
 u' (c_t)
-    = \max \left\{
+    = \max 
+    \left\{
         \beta R \,  \mathbb{E}_t  u'(c_{t+1})  \,,\;  u'(a_t)
     \right\}
 $$
 
-An explanation for this expression can be found [here](https://python.quantecon.org/ifp.html#value-function-and-euler-equation).
-
-We rewrite the Euler equation in functional form
-
-$$
-    (u' \circ \sigma)  (y)
-    = \max 
-    \left\{
-        \beta R \, \mathbb E (u' \circ \sigma)
-            [R (a - \sigma(y)) + Y]
-            \; , \; u'(a)
-    \right\}
-$$
-
-where $ (u' \circ \sigma)(y) := u'(\sigma(y)) $ and $ \sigma $ is a consumption
-policy.
-
-For given consumption policy $ \sigma $, we define $ (K \sigma) (y) $ as the unique $ c \in [0, a] $ that solves
+(An explanation for this expression can be 
+found [here](https://python.quantecon.org/ifp.html#value-function-and-euler-equation).)
 
 
-$$
-    u'(c)
-    = \max \left\{
-               \beta R \, \mathbb E (u' \circ \sigma) \,
-               [R (a - c) + Y]
-               \, , \;
-               u'(a)
-         \right\} 
-$$
+Let a consumption policy $\sigma$ be given.
 
-It [can be shown that](https://python.quantecon.org/ifp.html)
+Our task is to update it to the next guess.
 
-1. iterating with $ K $ computes an optimal policy and  
-1. if $ \sigma $ is increasing, then so is $ K\sigma $  
+We fix an *exogenous* grid of saving values $0 = s_0 < \ldots < s_{N-1}$
 
+(Savings is related to assets and consumption by $s = a - c$.)
 
-Hence below we always assume that $ \sigma $ is increasing.
+Using the exogenous savings grid, we will create an 
 
-The EGM is a technique for computing the update $ K\sigma $ given $ \sigma $ along a grid of asset values.
+- a consumption grid $ c_0, \ldots, c_{N-1} $ and
+- *endogenous* asset grid $ a_0, \ldots, a_{N-1}$.
 
-Notice that the second term in the max above dominates for sufficiently small $ a $.
+First we set $a_0 = c_0 = 0$, since zero consumption is an optimal (in fact the only) choice when $ a=0 $.
 
-We have $ c=a $ for all such $ a $.
-
-Hence, for sufficiently small $ a $,
+Then, for $i > 0$, we compute $c_i$ to obey the Euler condition
 
 $$
-u'(a) \geq
-   \beta R \, \mathbb E (u' \circ \sigma)  (Y)
+    u'(c_i)
+    = \beta R \, \mathbb E (u' \circ \sigma) \, [R s_i + Y]
+     \quad \text{for all } i 
 $$
 
-Equality holds at $ \bar a(y) $ given by
+Equivalently, we set
 
-$$
-\bar a (y) =
-   (u')^{-1}
-   \left\{
-       \beta R \, \mathbb E (u' \circ \sigma)  (Y)
-   \right\}
-$$
-
-We can now write
-
-$$
-u'(c)
-    = \begin{cases}
-        \beta R \, \mathbb E (u' \circ \sigma) \, [R (a - c) + Y]
-               & \text{if } a > \bar a (y) \\
-        u'(a)  & \text{if } a \leq \bar a (y)
-    \end{cases}
-$$
-
-Equivalently, we can state that the $ c $ satisfying $ c = (K\sigma)(y) $ obeys
-
-
-$$
-    c = \begin{cases}
-            (u')^{-1}
-            \left\{
-                \beta R \, \mathbb E (u' \circ \sigma) \,
-                   [R (a - c) + Y]
-            \right\}
-                   & \text{if } a > \bar a (y) \\
-                a  & \text{if } a \leq \bar a (y)
-        \end{cases} 
-$$
-
-We begin with an *exogenous* grid of saving values $ 0 = s_0 < \ldots < s_{N-1} $
-
-Using the exogenous savings grid, we create an *endogenous* asset grid
-$ a_0, \ldots, a_{N-1} $ and a consumption grid $ c_0, \ldots, c_{N-1} $ as follows.
-
-First we set $ a_0 = c_0 = 0 $, since zero consumption is an optimal (in fact the only) choice when $ a=0 $.
-
-Then, for $ i > 0 $, we compute
-
-<!-- #region -->
 $$
     c_i
     = (u')^{-1}
@@ -257,28 +200,31 @@ $$
      \quad \text{for all } i 
 $$
 
-and we set
+Then we set
 
 $$
     a_i = s_i + c_i
 $$
 
 
-We are now ready to iterate with $ K $.
-<!-- #endregion -->
+The new policy $\sigma'$ is formed by linearly interpolating the points $((a_i), (c_i))$.
 
-### JAX version
 
-First we define a vectorized operator $ K $ based on the EGM.
+### Implementation
 
-Notice in the code below that
 
-- we avoid all loops and any mutation of arrays  
-- the function is pure (no globals, no mutation of inputs)  
+Here's the policy update step.
 
-```python hide-output=false
+It reads in points $((a_i), (c_i))$ that are linearly interpolated into a policy
+$\sigma$.
+
+It returns a new set of points $((a_i'), (c_i'))$ that represent the updated
+policy $\sigma'$.
+
+
+```python
 @jax.jit
-def K_egm(a_in, σ_in, model):
+def update_policy(a_in, c_in, model):
     """
     The vectorized operator K using EGM.
 
@@ -297,7 +243,7 @@ def K_egm(a_in, σ_in, model):
 
     # Linearly interpolate σ
     def σ(a):
-        return jnp.interp(a, a_in, σ_in)
+        return jnp.interp(a, a_in, c_in)
 
     # Broadcast and vectorize
     def expectation(s):
@@ -319,10 +265,11 @@ def K_egm(a_in, σ_in, model):
     return a_out, σ_out
 ```
 
-Next we define a successive approximator that repeatedly applies $ K $.
+Next we define a successive approximator that repeatedly updates the policy
+using the endogenous grid method.
 
-```python hide-output=false
-def successive_approx_jax(model,
+```python
+def egm_solve(model,
             tol=1e-5,
             max_iter=100_000,
             verbose=True,
@@ -337,7 +284,7 @@ def successive_approx_jax(model,
     error = tol + 1
 
     while i < max_iter and error > tol:
-        a_new, σ_new = K_egm(a_vec, σ_vec, model)
+        a_new, σ_new = update_policy(a_vec, σ_vec, model)
         error = jnp.max(jnp.abs(σ_vec - σ_new))
         i += 1
         if verbose and i % print_skip == 0:
@@ -352,35 +299,24 @@ def successive_approx_jax(model,
     return a_new, σ_new
 ```
 
+
 ## Solutions
 
-Here we solve the IFP with JAX and Numba.
-
-We will compare both the outputs and the execution time.
+Here we solve the income fluctuation using the endogenous grid method.
 
 
-### Outputs
 
 ```python
 model = create_model()
+a_star, c_star = egm_solve(model, print_skip=100)
 ```
 
-Here’s a first run of the JAX code.
+Let's view the policies in a plot.
 
-```python hide-output=false
-%%time
-a_star, c_star = successive_approx_jax(model,
-                                       print_skip=1000)
-```
-
-Now let's check the outputs in a plot to make sure they are the same.
-
-```python hide-output=false
-# Compute optimal savings
+```python
 s_star = a_star - c_star
 
 fig, ax = plt.subplots()
-
 ax.plot(
    a_star,
    c_star,
@@ -392,12 +328,12 @@ ax.plot(
    label="savings policy"
 )
 ax.plot(a_star, a_star, 'k--', alpha=0.5, label="45 degree line")
-
 ax.set_xlabel('assets')
 ax.set_ylabel('consumption / savings')
 plt.legend()
 plt.show()
 ```
+
 
 ## Simulation
 
@@ -421,7 +357,7 @@ $$
 
 where $Y_{t+1}$ is the random income realization.
 
-```python hide-output=false
+```python
 def simulate(model, a_grid, c_policy, a_0=1.0, T=100, seed=123):
     """
     Simulate the optimal consumption path.
@@ -469,7 +405,7 @@ def simulate(model, a_grid, c_policy, a_0=1.0, T=100, seed=123):
 a_path, c_path, y_path = simulate(model, a_star, c_star)
 
 # Plot results
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 6))
 
 # Plot consumption and income
 ax1.plot(c_path, label='consumption')
@@ -496,7 +432,7 @@ The plot above shows the time series for a single household.
 Now let's simulate a large cross-section of households to study the stationary
 wealth distribution.
 
-We simulate $N = 5000$ households forward for $T = 500$ periods.
+We simulate $N = 5_000$ households forward for $T = 500$ periods.
 
 All households start with the same initial assets but face independent income
 shocks drawn from the lognormal distribution.
@@ -507,7 +443,8 @@ income realizations lead to heterogeneity in the wealth distribution.
 The final cross-section of assets provides an approximation to the stationary
 distribution of wealth under the optimal policy.
 
-```python hide-output=false
+
+```python
 def simulate_cross_section(model, a_grid, c_policy, a_0=1.0, T=500, N=5_000, seed=456):
     """
     Simulate a cross-section of households.
@@ -542,7 +479,6 @@ def simulate_cross_section(model, a_grid, c_policy, a_0=1.0, T=500, N=5_000, see
     for t in range(T):
         # Interpolate consumption policy for all households
         c_current = jnp.interp(a_current, a_grid, c_policy)
-
         # Update assets
         s_current = a_current - c_current
         a_current = model.R * s_current + y_sim[:, t]
@@ -556,13 +492,13 @@ a_final = simulate_cross_section(model, a_star, c_star)
 # Plot histogram with kernel density
 from scipy.stats import gaussian_kde
 
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots()
 ax.hist(a_final, bins=50, alpha=0.5, edgecolor='black', density=True, label='histogram')
 
 # Add kernel density estimate
 kde = gaussian_kde(a_final)
 a_range = jnp.linspace(jnp.min(a_final), jnp.max(a_final), 200)
-ax.plot(a_range, kde(a_range), 'r-', linewidth=2, label='kernel density')
+ax.plot(a_range, kde(a_range), 'k-', linewidth=2, label='kernel density estimate')
 
 ax.set_xlabel('assets')
 ax.set_ylabel('density')
