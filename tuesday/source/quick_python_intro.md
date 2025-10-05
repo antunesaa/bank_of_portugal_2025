@@ -17,17 +17,11 @@ kernelspec:
 
 **Author:** [John Stachurski](https://johnstachurski.net)
 
-----
 
-#### John Stachurski
-
-#### Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)
-
------
 
 This notebook provides a super quick introduction to Python.
 
-Participants who don't need it can either ask more advanced questions or sleep.
+Participants who don't need it can either ask more advanced questions, work, or sleep.
 
 Participants who want a slower treatment can either
 
@@ -248,7 +242,6 @@ b = np.empty(T+1)   # Allocate memory to store all b_t
 ```
 
 and then populate `b` in a for loop.
-
 
 ```{code-cell} ipython3
 # Put your solution here

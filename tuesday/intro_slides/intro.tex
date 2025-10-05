@@ -148,8 +148,6 @@
     \begin{itemize}
         \item Drug discovery and design
             \vspace{0.5em}
-        \item Research on diseases (e.g., cancer, Alzheimer's)
-            \vspace{0.5em}
         \item Enzyme engineering 
     \end{itemize}
 
@@ -238,7 +236,7 @@
     \vspace{0.5em}
     \vspace{0.5em}
 
-    $\quad \qquad$$\quad \qquad$ Source: MIT Technology Review  July 2024
+    $\quad \qquad$$\quad \qquad$ Source: MIT Technology Review  
 
 
 
@@ -257,17 +255,13 @@
 
 \begin{frame}{Investment}
 
-    Private AI investment in 2024:
-
-    \begin{itemize}
-        \item U.S. = \$109 billion 
-        \vspace{0.5em}
-        \item China \$9.3 billion 
-    \end{itemize}
+    Private AI investment by US firms in 2024 = \$109 billion 
 
         \vspace{0.5em}
-    Estimate for US firms in 2025: \$350 billion
+    Estimate for 2025 = \$350 billion
 
+        \vspace{0.5em}
+        \vspace{0.5em}
         \vspace{0.5em}
     Massive investments in 
 
@@ -276,7 +270,7 @@
         \vspace{0.5em}
         \item server / GPU / TPU design and production
         \vspace{0.5em}
-        \item software development
+        \item \brown{software development}
     \end{itemize}
 
 \end{frame}
@@ -446,10 +440,12 @@ outputs = vectorized_function(data_set)
 
     \begin{minted}{python}
 parallel_function = pmap(vectorized_function)  
-outputs = parallel_function(data_sets)  
+all_outputs = parallel_function(data_sets)  
     \end{minted}
 
 \end{frame}
+
+
 
 \begin{frame}
 
@@ -473,12 +469,10 @@ outputs = parallel_function(data_sets)
 \end{frame}
 
 
+
 \begin{frame}[fragile]
     \frametitle{Automatic differentiation}
 
-    \vspace{0.5em}
-    ``Exact numerical'' differentiation
-    
     \begin{minted}{python}
 from jax import grad
 
@@ -489,8 +483,7 @@ def f(θ, x):
 def loss(θ, x, y):
   return jnp.sum((y - f(θ, x))**2)
 
-loss_gradient = grad(loss)
-
+loss_gradient = grad(loss)   # exact automatic differentiation
 θ = θ - λ * loss_gradient(θ, x_data, y_data)
     \end{minted}
 
@@ -513,11 +506,11 @@ def f(x):
     Advantages over AOT compilers:
 
     \begin{itemize}
-        \item cleaner code
+        \item more adaptable
     \vspace{0.5em}
         \item more portable
     \vspace{0.5em}
-        \item lower compile times
+        \item detects and adapts to existing hardware
     \vspace{0.5em}
         \item automatic parallelization (same code for CPUs / GPUs)
     \end{itemize}

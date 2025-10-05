@@ -324,27 +324,25 @@ print(k)
     \begin{itemize}
         \item Operations are passed to specialized machine code 
         \vspace{0.5em}
-        \item Type-checking is paid per array, not per array element
+        \item Type-checking is \brown{paid per array, not per array element}
     \end{itemize}
 
-    \vspace{0.5em}
     \vspace{0.5em}
     Disadvantages 
 
     \begin{itemize}
-        \item Can be highly memory intensive (intermediate arrays)
+        \item Memory intensive (generates intermediate arrays)
         \vspace{0.5em}
-        \item \underline{Fails} to specialize on array \brown{shapes}
+        \item Limited --- how to accelerate the Solow code using NumPy?
         \vspace{0.5em}
-        \item Limited --- how would you accelerate the Solow code using NumPy?
+        \item Specializes on \brown{types} but not on \brown{shapes}
     \end{itemize}
 
+
+    \medskip
+    The last point is important for modern hardware\ldots
+
 \end{frame}
-
-
-
-
-
 
 
 \begin{frame}[fragile]
@@ -425,7 +423,7 @@ solow(0.2)  # JIT-compiled at first call
         \vspace{0.2em}
         \item dynamically typed\ldots (but compiler wants type stability)
         \vspace{0.2em}
-        \item close to the maths
+        \item elegant: close to the maths
     \end{itemize}
 
         \vspace{0.2em}
