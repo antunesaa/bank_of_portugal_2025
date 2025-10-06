@@ -5,15 +5,21 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.2
+      jupytext_version: 1.17.3
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
     name: python3
 ---
 
+<!-- #region -->
 # The Endogenous Grid Method
 
+
+**Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)**
+
+**Author:** [John Stachurski](https://johnstachurski.net)
+<!-- #endregion -->
 
 ## Overview
 

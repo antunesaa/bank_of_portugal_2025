@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.2
+      jupytext_version: 1.17.3
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -18,7 +18,7 @@ jupyter:
 
 **Author:** [John Stachurski](https://johnstachurski.net)
 
-September 2025
+October 2025
 
 This is a super quick illustration of the power of [JAX](https://github.com/google/jax), a Python library built by Google Research.
 
@@ -79,11 +79,15 @@ x = np.linspace(0, 10, n)
 ### With NumPy
 
 ```python
-%time np.cos(x)
+%%time 
+
+y = np.cos(x)
 ```
 
 ```python
-%time np.cos(x)
+%%time 
+
+y = np.cos(x)
 ```
 
 ```python
@@ -96,20 +100,21 @@ x = None
 x_jax = jnp.linspace(0, 10, n)
 ```
 
-```python
-jnp.cos(x_jax)
-```
-
 Let's time it.
 
-(The `block_until_ready()` method is only needed for timing.)
 
 ```python
-%time jnp.cos(x_jax).block_until_ready()
+%%time
+    
+y = jnp.cos(x_jax)
+jax.block_until_ready(y);  # Don't run forward until the array is returned
 ```
 
 ```python
-%time jnp.cos(x_jax).block_until_ready()
+%%time
+    
+y = jnp.cos(x_jax)
+jax.block_until_ready(y); 
 ```
 
 Here we change the input size --- can you explain why the timing changes?
@@ -119,11 +124,17 @@ x_jax = jnp.linspace(0, 10, n + 1)
 ```
 
 ```python
-%time jnp.cos(x_jax).block_until_ready()
+%%time
+    
+y = jnp.cos(x_jax)
+jax.block_until_ready(y);
 ```
 
 ```python
-%time jnp.cos(x_jax).block_until_ready()
+%%time
+    
+y = jnp.cos(x_jax)
+jax.block_until_ready(y);
 ```
 
 ```python
@@ -157,11 +168,15 @@ x = np.linspace(0, 10, n)
 ```
 
 ```python
-%time f(x)
+%%time 
+
+y = f(x)
 ```
 
 ```python
-%time f(x)
+%%time 
+
+y = f(x)
 ```
 
 ### With JAX
@@ -177,11 +192,17 @@ x_jax = jnp.linspace(0, 10, n)
 ```
 
 ```python
-%time f(x_jax).block_until_ready()
+%%time 
+
+y = f(x_jax)
+jax.block_until_ready(y);
 ```
 
 ```python
-%time f(x_jax).block_until_ready()
+%%time 
+
+y = f(x_jax)
+jax.block_until_ready(y)
 ```
 
 ### Compiling the Whole Function
@@ -191,11 +212,17 @@ f_jax = jax.jit(f)
 ```
 
 ```python
-%time f_jax(x_jax).block_until_ready()
+%%time 
+
+y = f_jax(x_jax)
+jax.block_until_ready(y);
 ```
 
 ```python
-%time f_jax(x_jax).block_until_ready()
+%%time 
+
+y = f_jax(x_jax)
+jax.block_until_ready(y);
 ```
 
 ```python

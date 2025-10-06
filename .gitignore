@@ -1,6 +1,6 @@
 # Temporary: Ignore Jupyter notebooks during development
 # TODO: Remove this block when ready to publish everything!
-*.ipynb
+# *.ipynb
 
 # Temporary development files
 tuesday/source/mathfoo.py
