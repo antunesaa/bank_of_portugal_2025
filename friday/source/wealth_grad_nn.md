@@ -6,7 +6,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.2
+      jupytext_version: 1.17.3
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -78,8 +78,8 @@ class Model(NamedTuple):
     Stores parameters for the model.
 
     """
-    γ: float = 2.0
-    β: float = 0.95
+    γ: float = 0.2
+    β: float = 0.96
     R: float = 1.01
 ```
 
@@ -106,13 +106,13 @@ class Config:
 
     """
     seed = 42                    # Seed for network initialization
-    epochs = 500                 # No of training epochs
-    path_length = 1000           # Length of each consumption path
-    layer_sizes = 1, 8, 8, 1     # Network layer sizes
-    init_lr = 0.0015             # Learning rate schedule parameter
-    min_lr = 0.0001              # Learning rate schedule parameter
-    warmup_steps = 100           # Learning rate schedule parameter
-    decay_steps = 300            # Learning rate schedule parameter
+    epochs = 400                 # No of training epochs
+    path_length = 500            # Length of each consumption path
+    layer_sizes = 1, 32, 32, 1   # Network layer sizes
+    init_lr = 0.001              # Learning rate schedule parameter
+    min_lr = 0.000005            # Learning rate schedule parameter
+    warmup_steps = 200           # Learning rate schedule parameter
+    decay_steps = 700            # Learning rate schedule parameter
 ```
 
 The following function initializes a single layer of the network using Le Cun
@@ -129,7 +129,7 @@ def initialize_layer(in_dim, out_dim, key):
     """
     s = jnp.sqrt(1.0 / in_dim)
     W = jax.random.normal(key, (in_dim, out_dim)) * s
-    b = jnp.ones((out_dim,))
+    b = jnp.zeros((out_dim,))
     return LayerParams(W, b)
 ```
 
@@ -166,8 +166,8 @@ parameters.
 ```python
 def forward(params, w):
     """
-    Evaluate neural network policy: maps a given wealth level w to a rate of
-    consumption c/w by running a forward pass through the network.
+    Evaluate neural network policy: maps a given wealth level w to
+    consumption rate c/w by running a forward pass through the network.
 
     """
     σ = jax.nn.selu          # Activation function
@@ -176,9 +176,10 @@ def forward(params, w):
     for W, b in params[:-1]:
         x = σ(x @ W + b)
     # Complete with sigmoid activation for consumption rate
+    # Direct output in [0, 0.99] range
     W, b = params[-1]
-    x = jax.nn.sigmoid(x @ W + b)
-    # Extract and return
+    x = jax.nn.sigmoid(x @ W + b) * 0.99  # Direct output in [0, 0.99]
+    # Extract and return consumption rate
     consumption_rate = x[0]
     return consumption_rate
 ```
@@ -213,11 +214,11 @@ def compute_lifetime_value(params, model, path_length):
         c = consumption_rate * w
         # Update loop state and return it
         w = R * (w - c)
-        value = value + discount * u(c, γ) 
+        value = value + discount * u(c, γ)
         discount = discount * β
         new_state = w, value, discount
         return new_state
-    
+
     initial_value, initial_discount = 0.0, 1.0
     initial_state = initial_w, initial_value, initial_discount
     final_w, final_value, discount = jax.lax.fori_loop(
@@ -285,8 +286,9 @@ We compute the optimal consumption rate and lifetime value from the analytical
 expressions.
 
 ```python
+
 κ = 1 - (β * R**(1 - γ))**(1/γ)
-print(f"Optimal savings rate = {κ}.\n")
+print(f"Optimal consumption rate = {κ}.\n")
 v_max = κ**(-γ) * u(1.0, γ)
 print(f"Theoretical maximum lifetime value = {v_max}.\n")
 ```
@@ -315,22 +317,31 @@ Now let's train the network.
 
 ```python
 value_history = []
+best_value = -jnp.inf
+best_params = params
 for i in range(epochs):
-    
+
     # Compute value and gradients at existing parameterization
     loss, grads = jax.value_and_grad(loss_function)(params, model, path_length)
     lifetime_value = - loss
     value_history.append(lifetime_value)
-    
+
+    # Track best parameters
+    if lifetime_value > best_value:
+        best_value = lifetime_value
+        best_params = params
+
     # Update parameters using optimizer
     updates, opt_state = optimizer.update(grads, opt_state)
     params = optax.apply_updates(params, updates)
-    
+
     if i % 100 == 0:
         print(f"Iteration {i}: Value = {lifetime_value:.4f}")
 
-
-print(f"\nFinal value: {value_history[-1]:.4f}")
+# Use best parameters instead of final
+params = best_params
+print(f"\nBest value: {best_value:.4f}")
+print(f"Final value: {value_history[-1]:.4f}")
 ```
 
 First we plot the evolution of lifetime value over the epochs.
@@ -357,7 +368,7 @@ ax.plot(w_grid, κ * jnp.ones(len(w_grid)), lw=2, label='optimal')
 ax.set_xlabel('wealth')
 ax.set_ylabel('consumption rate (c/w)')
 ax.set_title('Consumption rate')
-ax.set_ylim((0, 0.1))
+ax.set_ylim(0, 1)
 ax.legend()
 plt.show()
 ```
@@ -376,18 +387,18 @@ def simulate_consumption_path(params, T=120):
     """
     w_sim = [1.0]   # 1.0 is the initial wealth
     c_sim = []
-    w_opt = [1.0]  
+    w_opt = [1.0]
     c_opt = []
 
     w = 1.0
     for t in range(T):
 
-        # Update policy path
+        # Update policy path - forward returns consumption rate
         c = forward(params, w) * w
         c_sim.append(float(c))
         w = R * (w - c)
         w_sim.append(float(w))
-        
+
         if w <= 1e-10:
             break
 
@@ -399,10 +410,10 @@ def simulate_consumption_path(params, T=120):
         c_opt.append(c)
         w = R * (w - c)
         w_opt.append(w)
-        
+
         if w <= 1e-10:
             break
-    
+
     return w_sim, c_sim, w_opt, c_opt
 ```
 
@@ -432,3 +443,7 @@ plt.tight_layout()
 plt.show()
 ```
 
+
+```python
+
+```

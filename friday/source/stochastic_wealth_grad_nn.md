@@ -6,7 +6,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.2
+      jupytext_version: 1.17.3
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -60,7 +60,6 @@ from functools import partial
 from typing import NamedTuple
 ```
 
-
 ## Set up
 
 We use a class called `Model` to store model parameters.
@@ -71,11 +70,11 @@ class Model(NamedTuple):
     Stores parameters for the model.
 
     """
-    γ: float = 1.5    # Utility parameter
+    γ: float = 0.2    # Utility parameter
     β: float = 0.96   # Discount factor
     R: float = 1.01   # Gross interest rate
-    μ: float = -1.0   # income location parameter
-    ν: float = 0.2    # income volatility parameter
+    μ: float = 0.0    # income location parameter
+    ν: float = 0.4    # income volatility parameter
 ```
 
 We use a class called `LayerParams` to store parameters representing a single
@@ -100,13 +99,13 @@ class Config:
     Configuration and parameters for training the neural network.
 
     """
-    seed = 42                    # Seed for network initialization
-    epochs = 250                 # No of training epochs
-    layer_sizes = 1, 12, 12, 1   # Network layer sizes
-    init_lr = 0.0015             # Learning rate schedule parameter
-    min_lr = 0.0001              # Learning rate schedule parameter
-    warmup_steps = 100           # Learning rate schedule parameter
-    decay_steps = 300            # Learning rate schedule parameter
+    seed = 42                       # Seed for network initialization
+    epochs = 1500                   # No of training epochs
+    layer_sizes = 1, 32, 32, 32, 1  # Network layer sizes
+    init_lr = 0.01                  # Learning rate schedule parameter
+    min_lr = 0.001                  # Learning rate schedule parameter
+    warmup_steps = 100              # Learning rate schedule parameter
+    decay_steps = 300               # Learning rate schedule parameter
 ```
 
 The following function initializes a single layer of the network using Le Cun
@@ -237,13 +236,13 @@ Here's the loss function we will minimize.
 
 ```python
 def loss_function(
-        params, 
-        model, 
-        cross_section_size=1_000,
-        path_length=1_000, 
+        params,
+        model,
+        cross_section_size=5_000,
+        path_length=500,
         seed=42):
     """
-    Loss is the negation of the lifetime value of the policy 
+    Loss is the negation of the lifetime value of the policy
     identified by `params`.
 
     """
@@ -319,19 +318,29 @@ Now let's train the network.
 
 ```python
 value_history = []
+grad_norm_history = []
+key = random.PRNGKey(seed)
 for i in range(epochs):
-    
+
+    # Generate new random seed for this iteration
+    key, subkey = random.split(key)
+    iteration_seed = int(random.randint(subkey, (), 0, 2**31 - 1))
+
     # Compute value and gradients at existing parameterization
-    loss, grads = jax.value_and_grad(loss_function)(params, model)
+    loss, grads = jax.value_and_grad(loss_function)(params, model, seed=iteration_seed)
     lifetime_value = - loss
     value_history.append(lifetime_value)
-    
+
+    # Compute gradient norm
+    grad_norm = jnp.sqrt(sum(jnp.sum(g.W**2) + jnp.sum(g.b**2) for g in grads))
+    grad_norm_history.append(grad_norm)
+
     # Update parameters using optimizer
     updates, opt_state = optimizer.update(grads, opt_state)
     params = optax.apply_updates(params, updates)
-    
+
     if i % 100 == 0:
-        print(f"Iteration {i}: Value = {lifetime_value:.4f}")
+        print(f"Iteration {i}: Value = {lifetime_value:.4f}, Grad Norm = {grad_norm:.6f}")
 
 
 print(f"\nFinal value: {value_history[-1]:.4f}")
@@ -341,18 +350,27 @@ First we plot the evolution of lifetime value over the epochs.
 
 ```python
 # Plot learning progress
-fig, ax = plt.subplots()
-ax.plot(value_history, 'b-', linewidth=2)
-ax.set_xlabel('iteration')
-ax.set_ylabel('policy value')
-ax.set_title('learning progress')
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+ax1.plot(value_history, 'b-', linewidth=2)
+ax1.set_xlabel('iteration')
+ax1.set_ylabel('policy value')
+ax1.set_title('learning progress')
+
+ax2.plot(grad_norm_history, 'r-', linewidth=2)
+ax2.set_xlabel('iteration')
+ax2.set_ylabel('gradient norm')
+ax2.set_title('gradient norm over training')
+ax2.set_yscale('log')
+
+plt.tight_layout()
 plt.show()
 ```
 
 Next we plot the optimal consumption and savings policies.
 
 ```python
-w_grid = jnp.linspace(0.01, 1.0, 1000)
+w_grid = jnp.linspace(0.01, 10.0, 1000)
 consumption_rate = forward(params, w_grid)
 consumption = consumption_rate * w_grid
 savings = w_grid - consumption
@@ -364,4 +382,8 @@ ax.set_xlabel('wealth')
 ax.set_ylabel('consumption')
 ax.legend()
 plt.show()
+```
+
+```python
+
 ```
