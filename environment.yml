@@ -13,6 +13,8 @@ dependencies:
     - quantecon
     - jax[cpu]
     - keras
+    - fortran-majic
+    - nbconvert
     - optax
     - jupytext
     - rich
