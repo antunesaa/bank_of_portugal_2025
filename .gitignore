@@ -11,7 +11,7 @@ tuesday/us_cities.txt
 # Python cache and Jupyter checkpoints
 __pycache__/
 .ipynb_checkpoints/
-
+.virtual_documents/
 
 # Minted
 _minted
