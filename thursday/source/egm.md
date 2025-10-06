@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.3
+      jupytext_version: 1.17.2
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -105,7 +105,6 @@ class Model(NamedTuple):
     s_array: jax.Array  # savings grid
     y_draws: jax.Array  # income draws for Monte Carlo
 ```
-
 
 This function creates an instance with default parameter values.
 
@@ -291,21 +290,20 @@ def egm_solve(model,
     error = tol + 1
 
     while i < max_iter and error > tol:
-        a_new, σ_new = update_policy(a_vec, σ_vec, model)
-        error = jnp.max(jnp.abs(σ_vec - σ_new))
+        a_new, c_new = update_policy(a_vec, c_vec, model)
+        error = jnp.max(jnp.abs(c_vec - c_new))
         i += 1
         if verbose and i % print_skip == 0:
             print(f"Error at iteration {i} is {error}.")
-        a_vec, σ_vec = a_new, σ_new
+        a_vec, c_vec = a_new, c_new
 
     if error > tol:
         print("Failed to converge!")
     else:
         print(f"\nConverged in {i} iterations.")
 
-    return a_new, σ_new
+    return a_new, c_new
 ```
-
 
 ```python
 @jax.jit
@@ -323,7 +321,7 @@ def egm_solve_fast(
     def update(loop_state):
         i, error, a_vec, c_vec = loop_state
         a_new, c_new = update_policy(a_vec, c_vec, model)
-        error = jnp.max(jnp.abs(a_new - c_new))
+        error = jnp.max(jnp.abs(c_vec - c_new))
         i += 1
         return i, error, a_new, c_new
 
@@ -337,7 +335,6 @@ def egm_solve_fast(
     
     return a_star, c_star
 ```
-
 
 ## Solutions
 
@@ -390,7 +387,6 @@ ax.set_ylabel('consumption / savings')
 plt.legend()
 plt.show()
 ```
-
 
 ## Simulation
 
