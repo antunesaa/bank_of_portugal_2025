@@ -103,10 +103,11 @@ np.ones((2, 5))
 np.arange(1, 7)
 ```
 
-**Create a vector filled with n evenly spaced numbers from x to z**
+**Create a vector filled with n evenly spaced numbers**
 
 ```{code-cell} ipython3
-np.linspace(0, 5, 11)
+n = 11
+np.linspace(0, 5, n)
 ```
 
 **Create a vector filled with U(0, 1)**
@@ -115,10 +116,19 @@ np.linspace(0, 5, 11)
 np.random.rand(2, 3)
 ```
 
+
+```{code-cell} ipython3
+np.random.rand(2, 3)   # Redraw
+```
+
 **Create a vector filled with N(0, 1)**
 
 ```{code-cell} ipython3
 np.random.randn(2, 2, 3)
+```
+
+```{code-cell} ipython3
+np.random.randn(2, 2, 3)  # Redraw
 ```
 
 ### Operations on Arrays
@@ -130,6 +140,10 @@ z = np.full(3, 10.0)
 print(f"    x = {x}")
 print(f"    z = {z}")
 print(f"z + x = {z + x}")
+print(f"z - x = {z - x}")
+print(f"z * x = {z * x}")
+print(f"z / x = {z / x}")
+print(f"z**x  = {z ** x}")
 ```
 
 **Operations between scalars and arrays**
@@ -158,11 +172,18 @@ In general, for pointwise operations between arrays of different shape, NumPy us
 
 ```{code-cell} ipython3
 z = np.ones((3, 1)) * 10
-print(z)
-print()
-print(y)
-print()
-print(z + y)
+```
+
+```{code-cell} ipython3
+z
+```
+
+```{code-cell} ipython3
+y
+```
+
+```{code-cell} ipython3
+z + y
 ```
 
 #### Matrix Multiplication
@@ -172,12 +193,13 @@ print(y)
 print(y @ y.T)
 ```
 
-We can use `@` for inner products too:
+We can use `@` for inner products too, even for "flat" arrays.
 
 ```{code-cell} ipython3
 z = np.random.randn(10)
-print(np.sum(z * z))
-print(z @ z)
+print(f"The shape of z is {z.shape}")
+print("Explicit inner product:", np.sum(z * z))
+print("Using @", z @ z)
 ```
 
 ### Reductions
@@ -204,7 +226,8 @@ np.std(np.random.randn(100_000))
 
 ### Universal functions
 
-Universal functions ("ufuncs") are maps that operate directly on n-dimensional arrays in an element-by-element fashion.
+Universal functions ("ufuncs") are maps scalar-to-scalar maps
+that can also act on n-dimensional arrays, acting element-by-element.
 
 ```{code-cell} ipython3
 np.sin(x)
@@ -253,7 +276,7 @@ y = np.random.randn(5_000)
 
 fig, ax = plt.subplots()
 
-ax.scatter(x, y, color="DarkBlue", alpha=0.05, s=25)
+ax.scatter(x, y, color="DarkBlue", alpha=0.05, s=25);
 ```
 
 **Line plots**
@@ -268,7 +291,7 @@ ax.plot(x, y, linestyle="-", color="k")
 ax.plot(x, 2*y, linestyle="--", color="k")
 
 # Bonus - Fill between two lines
-ax.fill_between(x, y, 2*y, color="LightBlue", alpha=0.3)
+ax.fill_between(x, y, 2*y, color="LightBlue", alpha=0.3);
 ```
 
 **Bar plots**
@@ -277,7 +300,7 @@ ax.fill_between(x, y, 2*y, color="LightBlue", alpha=0.3)
 x = np.arange(10)
 y = np.cos(x)
 fig, ax = plt.subplots(figsize=(6, 4))
-ax.bar(x, y)
+ax.bar(x, y);
 ```
 
 **Histograms**
@@ -285,7 +308,7 @@ ax.bar(x, y)
 ```{code-cell} ipython3
 x = np.random.randn(5000)
 fig, ax = plt.subplots()
-_ = ax.hist(x, bins=25, density=True)
+ax.hist(x, bins=25, density=True, edgecolor='k', alpha=0.5);
 ```
 
 **Plotting piecewise linear interpolation**
@@ -301,7 +324,7 @@ fig, ax = plt.subplots()
 ax.scatter(x, y, color="r", s=20, label='interpolation points')
 ax.plot(x_interp, y_interp, alpha=0.5, lw=2, label='interpolated values')
 ax.set_yticks((-1, 0, 1))
-ax.legend()
+ax.legend();
 ```
 
 ## Scipy
@@ -330,7 +353,7 @@ y_interp = f(x_interp)
 
 fig, ax = plt.subplots()
 ax.scatter(x, y, color="r", s=20)
-ax.plot(x_interp, y_interp, lw=2, alpha=0.5)
+ax.plot(x_interp, y_interp, lw=2, alpha=0.5);
 ```
 
 **Other**
@@ -362,17 +385,30 @@ X = np.array([
 ])
 ```
 
+Here's the Cholesky decomposition
+
 ```{code-cell} ipython3
-la.cholesky(X)
+L = la.cholesky(X)
 ```
 
 ```{code-cell} ipython3
-la.solve(X, np.array([0.0, 0.5, 0.3]))
+L.T @ L
 ```
+
+Here's how we solve $X b = y$ for $b$
+
+```{code-cell} ipython3
+y = np.array((0.0, 0.5, 0.3))
+la.solve(X, y)
+```
+
+Get eigenvalues:
 
 ```{code-cell} ipython3
 la.eigvals(X)
 ```
+
+QR decomposition:
 
 ```{code-cell} ipython3
 Q, R = la.qr(X)
@@ -387,8 +423,14 @@ X
 Q @ R
 ```
 
+Here's how to compute an inverse:
+
 ```{code-cell} ipython3
 la.inv(X) @ X
+```
+
+```{code-cell} ipython3
+np.allclose(la.inv(X) @ X, np.identity(3))
 ```
 
 ### Statistics
@@ -432,7 +474,7 @@ SciPy's API for working with probability distributions is a bit weird but the co
 
 ## Numba
 
-`numba` is a very exciting, and powerful package, that brings "just-in-time" (JIT) compilation technology to Python.
+Numba is a powerful package that brings "just-in-time" (JIT) compilation technology to Python.
 
 ```{code-cell} ipython3
 import numpy as np
@@ -474,11 +516,16 @@ def calculate_pi_python(n=1_000_000):
 calculate_pi_python(1_000_000)
 ```
 
-_Fortran_
+To get a idea of how fast this is, let's compare it to a Fortran version.
+
+The following code allows us to call Fortran code from within Jupyter.
 
 ```{code-cell} ipython3
 #pip install meson ninja  # Uncomment if you wish
-#pip install fortran-magic
+```
+
+```{code-cell} ipython3
+#pip install fortran-magic  # Uncomment if you wish
 ```
 
 ```{code-cell} ipython3
@@ -529,7 +576,11 @@ end subroutine calculate_pi_fortran
 calculate_pi_fortran(1_000_000)
 ```
 
-Clearly Fortran is much faster!
+Clearly Fortran is much faster that the Python code.
+
+So should we be using Fortran?
+
+In general, no --- the next section explains.
 
 +++
 
@@ -554,19 +605,14 @@ For example, recall the function `mc_approximate_pi_python` (that we wrote earli
 * Almost all core Python objects. including: lists, tuples, dictionaries, integers, floats, strings
 * Python logic, including: `if.. elif.. else`, `while`, `for .. in`, `break`, `continue`
 * NumPy arrays
-* Many (but not all!) NumPy functions -- This includes `np.interp`!
-
-For more information, read these sections from the documentation
-
-* [Supported Python features](https://numba.readthedocs.io/en/stable/reference/pysupported.html)
-* [Supported NumPy  features](https://numba.readthedocs.io/en/stable/reference/numpysupported.html)
+* Many (but not all!) NumPy functions 
 
 ```{code-cell} ipython3
 import numba
 ```
 
 ```{code-cell} ipython3
-calculate_pi_numba = numba.jit(calculate_pi_python, nopython=True)
+calculate_pi_numba = numba.jit(calculate_pi_python)
 ```
 
 ```{code-cell} ipython3
@@ -584,7 +630,7 @@ calculate_pi_numba(1_000_000)
 **Writing parallel code with numba**
 
 ```{code-cell} ipython3
-@numba.jit(nopython=True, parallel=True)
+@numba.jit(parallel=True)
 def calculate_pi_parallel(n=1_000_000):
     in_circ = 0
 

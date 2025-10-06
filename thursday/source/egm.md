@@ -24,7 +24,7 @@ jupyter:
 ## Overview
 
 In this lecture we use the endogenous grid method (EGM) to solve a basic income
-fluctuation (optimal savings) problem.
+fluctuation (household optimal savings) problem.
 
 To keep things simple, the interest rate will be constant and labor income will
 be IID.
@@ -58,12 +58,9 @@ Let's use 64 bit floating point numbers for extra precision.
 ```python
 jax.config.update("jax_enable_x64", True)
 ```
-
-
-
 ## Setup
 
-We consider a household that chooses a state-contingent consumption plan $ \{c_t\}_{t \geq 0} $ to maximize
+We consider a household that chooses a consumption plan $ \{c_t\}_{t \geq 0} $ to maximize
 
 $$
     \mathbb{E} \, \sum_{t=0}^{\infty} \beta^t u(c_t)
@@ -123,7 +120,10 @@ def create_model(R=1.01,             # gross interest rate
                  s_size=200,         # savings grid size
                  y_size=1_000,       # number of income draws
                  seed=42):           # random seed
+    """
+    Builder function for Model class.
 
+    """
     # require R β < 1 for convergence
     assert R * β < 1, "Stability condition failed."
 
@@ -140,12 +140,9 @@ def create_model(R=1.01,             # gross interest rate
         β=β, R=R, γ=γ, μ=μ, ν=ν, s_array=s_array, y_draws=y_draws
     )
 ```
-
-
-
 ## Solution method
 
-The state $a_t$ takes values in $S := \mathbb R_+$.
+The state $a_t$ takes values in $\mathbb R_+$.
 
 We aim to compute an optimal consumption policy $\sigma^* \colon S \to S$, under which dynamics are given by
 
@@ -176,23 +173,28 @@ Let a consumption policy $\sigma$ be given.
 
 Our task is to update it to the next guess.
 
-We fix an *exogenous* grid of saving values $0 = s_0 < \ldots < s_{N-1}$
+We fix an *exogenous* grid of current saving values $0 = s_0 < \ldots < s_{N-1}$
 
 (Savings is related to assets and consumption by $s = a - c$.)
 
 Using the exogenous savings grid, we will create an 
 
-- a consumption grid $ c_0, \ldots, c_{N-1} $ and
-- *endogenous* asset grid $ a_0, \ldots, a_{N-1}$.
+1. a consumption grid $ c_0, \ldots, c_{N-1} $ and
+2. *endogenous* asset grid $ a_0, \ldots, a_{N-1}$
 
-First we set $a_0 = c_0 = 0$, since zero consumption is an optimal (in fact the only) choice when $ a=0 $.
+such that these pairs satisfying the Euler equation.
+
+When then interpolate these pairs to obtain the new policy guess $\sigma'$.
+
+Here are the steps:
+
+First we set $a_0 = c_0 = 0$.
 
 Then, for $i > 0$, we compute $c_i$ to obey the Euler condition
 
 $$
     u'(c_i)
     = \beta R \, \mathbb E (u' \circ \sigma) \, [R s_i + Y]
-     \quad \text{for all } i 
 $$
 
 Equivalently, we set
@@ -203,17 +205,18 @@ $$
     \left\{ 
         \beta R \, \mathbb E (u' \circ \sigma) \, [R s_i + Y]
      \right\}
-     \quad \text{for all } i 
 $$
 
-Then we set
+Lastly, we set
 
 $$
-    a_i = s_i + c_i
+    a_i = s_i + c_i, \quad i = 1, 2, \ldots, N-1
 $$
 
 
 The new policy $\sigma'$ is formed by linearly interpolating the points $((a_i), (c_i))$.
+
+Notice that we avoided any nonlinear maximization or root-finding routine.
 
 
 ### Implementation
@@ -251,24 +254,23 @@ def update_policy(a_in, c_in, model):
     def σ(a):
         return jnp.interp(a, a_in, c_in)
 
-    # Broadcast and vectorize
+    # Define a function for computing E (u'(σ(Rs + Y)))
     def expectation(s):
-        # For each savings level s, compute E[u'(σ(R*s + Y))]
-        a_next = R * s + y_draws  # shape (y_size,)
-        c_next = σ(a_next)  # shape (y_size,)
+        a_next = R * s + y_draws 
+        c_next = σ(a_next)  
         return jnp.mean(u_prime(c_next))
 
-    # Vectorize over s_array
-    E = jax.vmap(expectation)(s_array)
-    c = u_prime_inv(β * R * E)
+    # Vectorize and compute E (u'(σ(Rs + Y))) at all s
+    exp_term = jax.vmap(expectation)(s_array)
+    # Corresponding consumption
+    c = u_prime_inv(β * R * exp_term)
 
     # The policy is computed consumption with the first element set to zero
-    σ_out = c.at[0].set(0.0)
-
-    # Compute a_out by a = s + c
-    a_out = s_array + σ_out
+    c_out = c.at[0].set(0.0)
+    # a = s + c
+    a_out = s_array + c_out
     
-    return a_out, σ_out
+    return a_out, c_out  # Interpolate to get σ'
 ```
 
 Next we define a successive approximator that repeatedly updates the policy
@@ -276,16 +278,15 @@ using the endogenous grid method.
 
 ```python
 def egm_solve(model,
-            tol=1e-5,
-            max_iter=100_000,
-            verbose=True,
-            print_skip=25):
+              tol=1e-5,
+              max_iter=100_000,
+              verbose=True,
+              print_skip=25
+    ):
 
     # Initial condition is to consume all in every state
-    σ_init = model.s_array
-    a_init = jnp.copy(σ_init)
-    a_vec, σ_vec = a_init, σ_init
-
+    c_vec = model.s_array
+    a_vec = model.s_array
     i = 0
     error = tol + 1
 
@@ -295,7 +296,7 @@ def egm_solve(model,
         i += 1
         if verbose and i % print_skip == 0:
             print(f"Error at iteration {i} is {error}.")
-        a_vec, σ_vec = jnp.copy(a_new), jnp.copy(σ_new)
+        a_vec, σ_vec = a_new, σ_new
 
     if error > tol:
         print("Failed to converge!")
@@ -303,6 +304,38 @@ def egm_solve(model,
         print(f"\nConverged in {i} iterations.")
 
     return a_new, σ_new
+```
+
+
+```python
+@jax.jit
+def egm_solve_fast(
+        model,
+        tol=1e-5,
+        max_iter=100_000
+    ):
+
+    c_vec = model.s_array
+    a_vec = model.s_array
+    i = 0
+    error = tol + 1
+
+    def update(loop_state):
+        i, error, a_vec, c_vec = loop_state
+        a_new, c_new = update_policy(a_vec, c_vec, model)
+        error = jnp.max(jnp.abs(a_new - c_new))
+        i += 1
+        return i, error, a_new, c_new
+
+    def test(loop_state):
+        i, error, a_vec, c_vec = loop_state
+        return jnp.logical_and(i < max_iter, error > tol)
+
+    initial_loop_state = i, error, a_vec, c_vec
+    final_loop_state = jax.lax.while_loop(test, update, initial_loop_state)
+    i, error, a_star, c_star = final_loop_state
+    
+    return a_star, c_star
 ```
 
 
@@ -314,7 +347,25 @@ Here we solve the income fluctuation using the endogenous grid method.
 
 ```python
 model = create_model()
-a_star, c_star = egm_solve(model, print_skip=100)
+```
+
+```python
+%%time
+
+a_star, c_star = egm_solve(model)
+```
+
+```python
+%%time
+
+a_star, c_star = egm_solve(model)
+```
+
+```python
+%%time
+
+a_star, c_star = egm_solve_fast(model)
+jax.block_until_ready(a_star)
 ```
 
 Let's view the policies in a plot.
@@ -514,3 +565,7 @@ plt.show()
 ```
 
 
+
+```python
+
+```
