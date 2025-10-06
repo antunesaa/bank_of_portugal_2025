@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.2
+      jupytext_version: 1.17.3
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -111,13 +111,13 @@ This function creates an instance with default parameter values.
 
 ```python
 def create_model(R=1.01,             # gross interest rate
-                 β=0.96,             # discount factor
+                 β=0.98,             # discount factor
                  γ=1.5,              # CRRA preference parameter
                  μ=-1.0,             # income location parameter
                  ν=0.2,              # income volatility parameter
                  s_max=16,           # savings grid max
-                 s_size=200,         # savings grid size
-                 y_size=1_000,       # number of income draws
+                 s_size=500,         # savings grid size
+                 y_size=2_000,       # number of income draws
                  seed=42):           # random seed
     """
     Builder function for Model class.
@@ -305,6 +305,8 @@ def egm_solve(model,
     return a_new, c_new
 ```
 
+Here's an alternative jit-compiled version of the same function.
+
 ```python
 @jax.jit
 def egm_solve_fast(
@@ -362,7 +364,14 @@ a_star, c_star = egm_solve(model)
 %%time
 
 a_star, c_star = egm_solve_fast(model)
-jax.block_until_ready(a_star)
+jax.block_until_ready(a_star);
+```
+
+```python
+%%time
+
+a_star, c_star = egm_solve_fast(model)
+jax.block_until_ready(a_star);
 ```
 
 Let's view the policies in a plot.
