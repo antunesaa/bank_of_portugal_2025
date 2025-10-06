@@ -1,6 +1,5 @@
 \input{../../preamble}
 
-
 \title{Artificial Neural Networks}
 \subtitle{Prepared for the Bank of Portugal Computational Economics Course (Oct 2025)}
 
@@ -687,6 +686,28 @@
 
 \end{frame}
 
+
+\begin{frame}[fragile]
+
+    \begin{minted}{python}
+@jax.jit
+def f(θ, x):
+    for W, b in θ:
+        x = jnp.tanh(x @ W + b)
+    return x
+
+def loss(θ, x, y):
+  return jnp.sum((y - f(θ, x))**2)
+
+loss_gradient = grad(loss)   
+
+def train(θ, x_data, y_data):
+    for i in range(m):
+        θ = θ - λ * loss_gradient(θ, x_data, y_data)
+    return θ
+    \end{minted}
+
+\end{frame}
 
 \begin{frame}{Extensions}
 
