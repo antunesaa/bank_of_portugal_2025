@@ -23,7 +23,9 @@ methods rather than particular models or modeling paradigms.
 ## Schedule
 
 ### Tuesday: 10:15 – 12:30 and 14:00 – 17:00
-* Prep: Use [Colab](https://colab.research.google.com/) or install [Anaconda](https://www.anaconda.com/download) and [JAX](https://docs.jax.dev/en/latest/installation.html)
+* Prep
+    - Use [Colab](https://colab.research.google.com/) or install [Anaconda](https://www.anaconda.com/download) and [JAX](https://docs.jax.dev/en/latest/installation.html)
+    - Use [Jupyter lab](https://jupyter.org/) (or, in future, a text editor, or an AI)
 * [intro_slides/intro.pdf](tuesday/intro_slides/intro.pdf)
 * [1_quick_python_intro.ipynb](tuesday/1_quick_python_intro.ipynb)
 * [sci_comp_slides/sci_comp.pdf](tuesday/sci_comp_slides/sci_comp.pdf)
