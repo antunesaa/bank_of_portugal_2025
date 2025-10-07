@@ -45,9 +45,9 @@ Here are a few lines of code that perform the task we set
 import numpy as np
 import matplotlib.pyplot as plt   
 
+fig, ax = plt.subplots()
 ϵ_values = np.random.randn(100)   # 100 draws from N(0, 1)
-plt.plot(ϵ_values)                # Plot draws
-plt.show()
+ax.plot(ϵ_values)                # Plot draws
 ```
 
 Let’s discuss some aspects of this program.
@@ -119,9 +119,9 @@ ts_length = 100
 for i in range(ts_length):
     e = np.random.randn()
     ϵ_values.append(e)
-
-plt.plot(ϵ_values)
-plt.show()
+    
+fig, ax = plt.subplots()
+ax.plot(ϵ_values)
 ```
 
 How does it work?
@@ -206,8 +206,9 @@ while i < ts_length:
     e = np.random.randn()
     ϵ_values.append(e)
     i = i + 1             # Equivalent: i += 1
-plt.plot(ϵ_values)
-plt.show()
+
+fig, ax = plt.subplots()
+ax.plot(ϵ_values)
 ```
 
 How does it work?
@@ -263,8 +264,10 @@ for t in range(T):
     b.append(x)
     x = (1 + r) *x
 b.append(x)
-plt.plot(b, label='bank balance')
-plt.legend()
+
+fig, ax = plt.subplots()
+ax.plot(b, label='bank balance')
+ax.legend()
 plt.show()
 ```
 
@@ -276,9 +279,9 @@ b[0] = 10         # initial balance
 for t in range(T):
     b[t+1] = (1 + r) * b[t]
 
-plt.plot(b, label='bank balance')
-plt.legend()
-plt.show()
+fig, ax = plt.subplots()
+ax.plot(b, label='bank balance')
+ax.legend()
 ```
 
 **Exercise**
@@ -323,8 +326,8 @@ x[0] = 0
 for t in range(T):
     x[t+1] = α * x[t] + np.random.randn()
 
-plt.plot(x)
-plt.show()
+fig, ax = plt.subplots()
+ax.plot(x)
 ```
 
 **Exercise** 
@@ -337,7 +340,7 @@ Use a `for` loop to step through the $ \alpha $ values.
 If you can, add a legend, to help distinguish between the three time series.
 
 - If you call the `plot()` function multiple times before calling `show()`, all of the lines you produce will end up on the same figure.  
-- For the legend, noted that suppose `var = 42`, the expression `f'foo{var}'` evaluates to `'foo42'`.
+- For the legend, if `var = 42`, then `f'foo{var}'` evaluates to `'foo42'`.
 
 ```{code-cell} ipython3
 # Put your code here
@@ -353,20 +356,18 @@ for i in range(20):
 T = 200
 x = np.empty(T+1)
 
+fig, ax = plt.subplots()
+
 for α in α_values:
     x[0] = 0
     for t in range(T):
         x[t+1] = α * x[t] + np.random.randn()
-    plt.plot(x, label=f'$\\alpha = {α}$')
+    ax.plot(x, label=f'$\\alpha = {α}$')
 
-plt.legend()
-plt.show()
+ax.legend()
 ```
 
-## Conditional execution
-
-One important aspect of essentially all programming languages is branching and
-conditions.
+## Branches and conditions
 
 In Python, conditions are usually implemented with if-else syntax.
 
@@ -383,15 +384,6 @@ for x in numbers:
         print(-1)
     else:
         print(1)
-```
-
-```{code-cell} ipython3
-# Put your code here
-```
-
-```{code-cell} ipython3
-for i in range(20):
-    print("Solution below.")
 ```
 
 **Exercise**
@@ -439,11 +431,11 @@ for t in range(T):
         abs_x = x[t]
     x[t+1] = α * abs_x + np.random.randn()
 
-plt.plot(x)
-plt.show()
+fig, ax = plt.subplots()
+ax.plot(x)
 ```
 
-Here’s a shorter way to write the same thing:
+Here’s another way to write the same thing:
 
 ```{code-cell} ipython3
 α = 0.9
@@ -455,12 +447,11 @@ for t in range(T):
     abs_x = - x[t] if x[t] < 0 else x[t]
     x[t+1] = α * abs_x + np.random.randn()
 
-plt.plot(x)
-plt.show()
+fig, ax = plt.subplots()
+ax.plot(x)
 ```
 
 ## Data Types
-
 
 Computer programs typically keep track of a range of data types.
 
@@ -479,8 +470,7 @@ We can check the type of any object in memory using the `type()` function.
 type(x)
 ```
 
-In the next line of code, the interpreter evaluates the expression on the right
-of = and binds `y` to this value
+What happens in the next line of code?
 
 ```{code-cell} ipython3
 y = 100 < 10
@@ -520,7 +510,7 @@ A related data type is **tuples**, which are "immutable" lists
 
 ```{code-cell} ipython3
 x = ('a', 'b')  # Parentheses instead of the square brackets
-x = 'a', 'b'    # Or no brackets --- the meaning is identical
+x =  'a', 'b'    # Or no brackets --- the meaning is identical
 x
 ```
 
@@ -619,13 +609,12 @@ Suppose that we want to make the information more readable, by capitalizing name
 The program below reads the data in and makes the conversion:
 
 ```{code-cell} ipython3
-data_file = open('us_cities.txt', 'r')
-for line in data_file:
-    city, population = line.split(':')         # Tuple unpacking
-    city = city.title()                        # Capitalize city names
-    population = f'{int(population):,}'        # Add commas to numbers
-    print(city.ljust(15) + population)
-data_file.close()
+with open('us_cities.txt', 'r') as data_file:
+    for line in data_file:
+        city, population = line.split(':')         # Tuple unpacking
+        city = city.title()                        # Capitalize city names
+        population = f'{int(population):,}'        # Add commas to numbers
+        print(city.ljust(15) + population)
 ```
 
 ### Looping without Indices
@@ -656,6 +645,7 @@ For example, try running the following code
 ```{code-cell} ipython3
 countries = ('Japan', 'Korea', 'China')
 cities = ('Tokyo', 'Seoul', 'Beijing')
+
 for country, city in zip(countries, cities):
     print(f'The capital of {country} is {city}')
 ```
@@ -690,6 +680,10 @@ range(8)
 ```
 
 ```{code-cell} ipython3
+list(range(8))
+```
+
+```{code-cell} ipython3
 doubles = [2 * x for x in range(8)]
 doubles
 ```
@@ -698,6 +692,12 @@ doubles
 
 
 ### Comparisons
+
+Comparisons are statements such as
+
+```{code-cell} ipython3
+1 < 10
+```
 
 In Python we can chain inequalities
 
@@ -714,6 +714,12 @@ When testing for equality we use `==`
 ```{code-cell} ipython3
 x = 1    # Assignment
 x == 2   # Comparison
+```
+
+For non numerical comparisons we can use `is`
+
+```{code-cell} ipython3
+None is None
 ```
 
 For “not equal” use `!=`
@@ -756,15 +762,10 @@ See also the Python style guide [PEP8](https://www.python.org/dev/peps/pep-0008/
 
 **Exercise**
 
-Part 1: Given two numeric lists or tuples `x_vals` and `y_vals` of equal length, compute
+1. Given two numeric lists or tuples `x_vals` and `y_vals` of equal length, compute
 their inner product using `zip()`.
-
-Part 2: In one line, count the number of even numbers in 0,…,99.
-
-
-(Hint: `x % 2` returns 0 if `x` is even, 1 otherwise.)
-
-Part 3: Given `pairs = ((2, 5), (4, 2), (9, 8), (12, 10))`, count the number of pairs `(a, b)`
+2. In one line, count the number of even numbers in 0,…,99.  (Hint: `x % 2` returns 0 if `x` is even, 1 otherwise.)
+3. Given `pairs = ((2, 5), (4, 2), (9, 8), (12, 10))`, count the number of pairs `(a, b)`
 such that both `a` and `b` are even.
 
 ```{code-cell} ipython3
@@ -868,9 +869,24 @@ new_abs_function(-3)
 
 Note that a function can have arbitrarily many `return` statements (including zero).
 
+```{code-cell} ipython3
+def another_abs_function(x):
+    if x < 0:
+        return -x
+    return x
+```
+
 Functions without a return statement automatically return the special Python object `None`.
 
-+++
+```{code-cell} ipython3
+def foo():
+    pass
+```
+
+```{code-cell} ipython3
+x = foo()
+print(x)
+```
 
 **Exercise**
 
@@ -883,7 +899,7 @@ Write a function that takes a string as an argument and returns the number of ca
 ```
 
 ```{code-cell} ipython3
-for i in range(12):
+for i in range(20):
     print("Solution below.")
 ```
 
@@ -904,7 +920,7 @@ Alternatively,
 
 ```{code-cell} ipython3
 def count_upper_case(string):
-    return sum([c.isupper() for c in string])
+    return sum([c.isupper() and c.isalpha() for c in string])
 
 count_upper_case('The Rain in Spain')
 ```
@@ -933,8 +949,6 @@ f(2, a=4, b=5)
 
 ### The Flexibility of Python Functions
 
-
-- Any number of functions can be defined in a given file.  
 - Functions can be (and often are) defined inside other functions.  
 - Any object can be passed to a function as an argument, including other functions.  
 - A function can return any kind of object, including functions.
@@ -966,7 +980,7 @@ from scipy.integrate import quad
 quad(lambda x: x**3, 0, 2)
 ```
 
-### Random Draws
+### More examples of functions
 
 Consider again the code
 
@@ -978,11 +992,11 @@ for i in range(ts_length):
     e = np.random.randn()
     ϵ_values.append(e)
 
-plt.plot(ϵ_values)
-plt.show()
+fig, ax = plt.subplots()
+ax.plot(ϵ_values)
 ```
 
-We can break this down as follows:
+Let's create a function that does most of the work.
 
 ```{code-cell} ipython3
 def generate_data(n):
@@ -992,9 +1006,9 @@ def generate_data(n):
         ϵ_values.append(e)
     return ϵ_values
 
+fig, ax = plt.subplots()
 data = generate_data(100)
-plt.plot(data)
-plt.show()
+ax.plot(data)
 ```
 
 Here's an alternative where we pass a function to a function:
@@ -1008,14 +1022,14 @@ def generate_data(n, generator_type):
     return ϵ_values
 
 data = generate_data(100, np.random.uniform)
-plt.plot(data)
-plt.show()
+fig, ax = plt.subplots()
+ax.plot(data)
 ```
 
 **Exercise**
 
-The binomial random variable $Y$ gives the number of successes in $ n $ binary trials, where each trial
-succeeds with probability $ p $.
+The binomial random variable $Y$ gives the number of successes in $ n $ binary
+independent trials, where each trial succeeds with probability $ p $.
 
 Without any import besides `from numpy.random import uniform`, write a function
 `binomial_rv` such that `binomial_rv(n, p)` generates one draw of $ Y $.
@@ -1041,7 +1055,7 @@ def binomial_rv(n, p):
     for i in range(n):
         U = uniform()
         if U < p:
-            count = count + 1    # Or count += 1
+            count += 1 
     return count
 
 binomial_rv(10, 0.5)
@@ -1050,9 +1064,7 @@ binomial_rv(10, 0.5)
 ## OOP: Objects and Methods
 
 
-The traditional programming paradigm (Fortran, C, MATLAB, etc.) is called
-**procedural**.
-
+The traditional programming paradigm (Fortran, C, MATLAB, etc.) is called **procedural**.
 
 Another important paradigm is **object-oriented programming** (OOP) 
 
@@ -1149,7 +1161,7 @@ id(y)
 id(z)
 ```
 
-In this example, `y` and `z` happen to have the same value (i.e., `2.5`), but they are not the same object.
+Here `y` and `z` have the same value but they are not the same object.
 
 +++
 
@@ -1254,20 +1266,15 @@ x.__setitem__(0, 'aa')  # Equivalent to x[0] = 'aa'
 x
 ```
 
-(If you wanted to you could modify the `__setitem__` method, so that square bracket assignment does something totally different)
-
-+++
-
 ## Inspection Using Rich
 
-There’s a nice package called [rich](https://github.com/Textualize/rich) that
-helps us view the contents of an object.
-
-For example,
+There’s a nice package called [rich](https://github.com/Textualize/rich) that helps us view the contents of an object.
 
 ```{code-cell} ipython3
 #!pip install rich   # Uncomment if necessary
 ```
+
+For example,
 
 ```{code-cell} ipython3
 from rich import inspect
@@ -1318,17 +1325,15 @@ What happens when the number of names bound to an object goes to zero?
 Here’s an example of this situation:
 
 ```{code-cell} ipython3
-x = 'foo'    # bind x to 'foo'
-id(x)
-x = 'bar'    # rebind x to 'bar'
-id(x)
+x = 'foo'    # the string object 'foo' is created in memory and x is bound to it 
+x = 'bar'    # x is rebound to the string object 'bar'
 ```
 
 Now there are no names bound to `'foo'`.
 
-This releases `'foo'` to be garbage collected.
+Python releases `'foo'` to be garbage collected.
 
-In other words, the memory slot that stores that object is deallocated and returned to the operating system.
+(The memory slot that stores that object is returned to the operating system.)
 
 +++
 
@@ -1353,11 +1358,12 @@ Python uses multiple namespaces, creating them on the fly as necessary.
 
 For example, every time we import a module, Python creates a namespace for that module.
 
-To see this in action, suppose we write a script `mathfoo.py` with a single line
+To see this in action, suppose we write a script `mathfoo.py` as follows
 
 ```{code-cell} ipython3
-%%file mathfoo.py
+%%writefile mathfoo.py
 pi = 'foobar'
+x = 42
 ```
 
 Let's import this "module"
@@ -1387,25 +1393,11 @@ These two different bindings of `pi` exist in different namespaces, each one imp
 If you wish, you can look at the dictionary directly, using `module_name.__dict__`.
 
 ```{code-cell} ipython3
-math.__dict__.items()
+mathfoo.__dict__.keys()  # Show all keys in the dictionary
 ```
 
-As you know, we access elements of the namespace using the dotted attribute notation
-
 ```{code-cell} ipython3
-math.pi
-```
-
-This is entirely equivalent to `math.__dict__['pi']`
-
-```{code-cell} ipython3
-math.__dict__['pi'] 
-```
-
-Another way to view the namespace of `math` is
-
-```{code-cell} ipython3
-vars(math)
+mathfoo.__dict__['pi']
 ```
 
 ### Interactive Sessions
@@ -1417,7 +1409,7 @@ What about commands typed at the prompt?
 
 These are also regarded as being executed within a module — in this case, a module called `__main__`.
 
-To check this, we can look at the current module name via the value of `__name__` given at the prompt
+To check this, we can look at the current module name via the value of `__name__`
 
 ```{code-cell} ipython3
 print(__name__)
@@ -1476,7 +1468,7 @@ function, and registers the variables in that namespace.
 
 Variables in the local namespace are called *local variables*.
 
-After the function returns, the namespace is deallocated and lost.
+After the function returns, the function's namespace is deallocated and lost.
 
 While the function is executing, we can view the contents of the local namespace with `locals()`.
 
@@ -1624,8 +1616,4 @@ Here’s what happens
   - Mutates the data in the list to `[101]`
   - Returns the mutated list
  
-Global `x` is now bound to the mutated list `[2]`
-
-```{code-cell} ipython3
-
-```
+Global `x` is still bound to the (now mutated) list

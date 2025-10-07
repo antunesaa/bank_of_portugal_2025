@@ -88,8 +88,7 @@ def compute_series(n):
     x[0] = 1  # Start in state 1
     for t in range(1, n):
         U = np.random.random()
-        current_x = x[t-1]
-        if current_x == 0:
+        if x[t-1] == 0:
             x[t] = 1 if U < p else 0
         else: # x = 1
             x[t] = 0 if U < q else 1
@@ -114,7 +113,6 @@ print(np.mean(x == 0))  # Fraction of time x is in state 0
 Just for fun, let's add a plot that shows how the fraction of time spent in state zero converges to 2/3.
 
 ```{code-cell} ipython3
-
 n_plot = 2500
 x_plot = compute_series(n_plot)
 
@@ -263,7 +261,6 @@ def compute_call_price_parallel(β=β,
 Let's also create non-parallel version for comparison
 
 ```{code-cell} ipython3
-
 @jit(parallel=False)
 def compute_call_price_serial(β=β,
                               μ=μ,
@@ -311,6 +308,10 @@ with timer:
 elapsed_time_parallel = timer.elapsed
 print(f"Parallel price: {price_parallel:.6f}")
 print(f"Parallel is {elapsed_time_serial / elapsed_time_parallel:.2f}x faster")
+```
+
+```{code-cell} ipython3
+
 ```
 
 ```{code-cell} ipython3
