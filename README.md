@@ -24,8 +24,8 @@ methods rather than particular models or modeling paradigms.
 
 ### Tuesday: 10:15 – 12:30 and 14:00 – 17:00
 * [intro_slides/intro.pdf](tuesday/intro_slides/intro.pdf)
-* [sci_comp_slides/sci_comp.pdf](tuesday/sci_comp_slides/sci_comp.pdf)
 * [1_quick_python_intro.ipynb](tuesday/1_quick_python_intro.ipynb)
+* [sci_comp_slides/sci_comp.pdf](tuesday/sci_comp_slides/sci_comp.pdf)
 * [2_scientific_python_intro.ipynb](tuesday/2_scientific_python_intro.ipynb)
 * [3_simulation_exercises.ipynb](tuesday/3_simulation_exercises.ipynb)
 
